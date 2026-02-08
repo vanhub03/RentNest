@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    username: admin
+    password: admin
+  data:
+    rest:
+      basePath: /api
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        type: trace
+        format_sql: true
+        enable_lazy_load_no_trans: true
+  jwt:
+    secret:
+    expiration:
