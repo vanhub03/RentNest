@@ -39,4 +39,7 @@ public abstract class BaseEntity {
 //    @Column(name = "updated_by")
 //    @JsonProperty(value = "updated_by")
 //    private String updatedBy;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
 }

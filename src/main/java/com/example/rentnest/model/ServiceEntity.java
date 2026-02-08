@@ -2,6 +2,8 @@ package com.example.rentnest.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 
@@ -12,6 +14,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE services set is_deleted = true where id = ?")
+@SQLRestriction("is_deleted = 0")
 public class ServiceEntity extends BaseEntity{
     @Column(name="service_name", nullable = false)
     private String serviceName; //dien, nuoc, wifi

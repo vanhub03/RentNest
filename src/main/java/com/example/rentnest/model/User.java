@@ -3,6 +3,8 @@ package com.example.rentnest.model;
 import com.example.rentnest.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.List;
 
@@ -13,6 +15,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE users set is_deleted = true where id = ?")
+@SQLRestriction("is_deleted = 0")
 public class User extends BaseEntity{
     @Column(nullable = false, unique = true, length = 50)
     private String username;
