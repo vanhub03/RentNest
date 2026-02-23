@@ -1,7 +1,13 @@
 package com.example.rentnest.model.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
