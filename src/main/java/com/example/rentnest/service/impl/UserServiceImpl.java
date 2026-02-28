@@ -30,4 +30,9 @@ public class UserServiceImpl extends BaseServiceImpl<User, Long, UserRepository>
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+
+    @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        return userRepository.existsByPhoneNumber(phoneNumber);
+    }
 }

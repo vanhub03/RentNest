@@ -58,15 +58,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest){
         if(userService.existsByUsername(signupRequest.getUsername())){
-            return ResponseEntity.badRequest().body("Username already exists");
+            return ResponseEntity.badRequest().body(new MessageResponse("Username already exists"));
         }
         if(userService.existsByEmail(signupRequest.getEmail())){
-            return ResponseEntity.badRequest().body("Email already exists");
+            return ResponseEntity.badRequest().body(new MessageResponse("Email already exists"));
+        }
+        if(userService.existsByPhoneNumber(signupRequest.getPhoneNumber())){
+            return ResponseEntity.badRequest().body(new MessageResponse("Phone number already exists"));
         }
         User user = new User();
         user.setUsername(signupRequest.getUsername());
         user.setEmail(signupRequest.getEmail());
         user.setPassword(encoder.encode(signupRequest.getPassword()));
+        user.setFullname(signupRequest.getFullName());
+        user.setPhoneNumber(signupRequest.getPhoneNumber());
         String strRole = signupRequest.getRole();
         if("LANDLORD".equals(strRole)){
             user.setRole(Role.LANDLORD);
