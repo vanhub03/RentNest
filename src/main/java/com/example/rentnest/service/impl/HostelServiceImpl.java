@@ -22,7 +22,7 @@ public class HostelServiceImpl extends BaseServiceImpl<Hostel, Long, HostelRepos
 
     @Override
     public Page<HostelCardResponse> getHostelsByLandlord(Long landlordId, String keyword, Pageable pageable) {
-        Specification<Hostel> spec = HostelSpecification.filterRoomsForLandlord(landlordId, keyword);
+        Specification<Hostel> spec = HostelSpecification.filterHostelForLandlord(landlordId, keyword);
         Page<Hostel> hostels = hostelRepository.findAll(spec, pageable);
         return hostels.map(this::mapToHostelResponse);
     }

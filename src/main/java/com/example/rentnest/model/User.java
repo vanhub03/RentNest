@@ -3,6 +3,7 @@ package com.example.rentnest.model;
 import com.example.rentnest.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -25,6 +26,7 @@ public class User extends BaseEntity{
     private String password;
 
     @Column(name = "full_name")
+    @Nationalized
     private String fullname;
 
     @Column(unique = true)

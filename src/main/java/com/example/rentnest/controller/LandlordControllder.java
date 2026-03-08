@@ -1,12 +1,15 @@
 package com.example.rentnest.controller;
 
 import com.example.rentnest.model.dto.response.HostelCardResponse;
+import com.example.rentnest.model.dto.response.RoomCardResponse;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.HostelService;
+import com.example.rentnest.service.RoomService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAuthority('LANDLORD')")
 public class LandlordControllder {
     private final HostelService hostelService;
+    private final RoomService roomService;
 
-    public LandlordControllder(HostelService hostelService) {
+    public LandlordControllder(HostelService hostelService, RoomService roomService) {
         this.hostelService = hostelService;
+        this.roomService = roomService;
     }
 
     @GetMapping("/hostels")
@@ -34,6 +39,18 @@ public class LandlordControllder {
             ){
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<HostelCardResponse> response = hostelService.getHostelsByLandlord(userDetails.getId(), keyword, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/rooms")
+    public ResponseEntity<Page<RoomCardResponse>> getRooms(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long hostelId,
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        Page<RoomCardResponse> response = roomService.getRoomByLandlord(userDetails.getId(), keyword, status, hostelId, pageable);
         return ResponseEntity.ok(response);
     }
 }

@@ -2,6 +2,7 @@ package com.example.rentnest.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -19,26 +20,34 @@ import java.util.List;
 public class Hostel extends BaseEntity{
 
     @Column(nullable = false)
+    @Nationalized
     private String name;
 
     @Column(name = "address_detail")
+    @Nationalized
     private String addressDetail;
 
     @Column(name = "ward_code")
+    @Nationalized
     private String wardCode; //ma phuong
 
+    @Nationalized
     private String ward; //ten phuong
 
     @Column(name="district_code")
+    @Nationalized
     private String districtCode; //ma quan huyen
 
+    @Nationalized
     private String district;
 
+    @Nationalized
     private String cityCode; //ma thanh pho, tinh
 
+    @Nationalized
     private String city;
 
-    @Column(columnDefinition = "TEXT")
+    @Nationalized
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

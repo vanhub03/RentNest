@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HostelSpecification {
-    public static Specification<Hostel> filterRoomsForLandlord(Long landlordId, String keyword) {
+    public static Specification<Hostel> filterHostelForLandlord(Long landlordId, String keyword) {
         return ((root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(root.get("owner").get("id"), landlordId));

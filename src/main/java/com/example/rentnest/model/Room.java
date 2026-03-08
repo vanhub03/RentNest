@@ -3,6 +3,7 @@ package com.example.rentnest.model;
 import com.example.rentnest.enums.RoomStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -40,4 +41,10 @@ public class Room extends BaseEntity{
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoomImage> images;
+
+    @Column(name = "bed_type")
+    private String bedType;
+
+    @Column(name = "bath_count")
+    private int bathCount;
 }
