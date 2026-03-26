@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE contracts set is_deleted = true where id = ?")
+@SQLDelete(sql = "UPDATE contracts set is_deleted = 1 where id = ?")
 @SQLRestriction("is_deleted = 0")
 public class Contract extends BaseEntity {
 
@@ -23,9 +23,9 @@ public class Contract extends BaseEntity {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @ManyToOne
-    @JoinColumn(name = "tenant_id", nullable = false)
-    private User tenant; // Người thuê
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "representative_occupant_id", nullable = false)
+    private Occupant representativeOccupant; // Người đứng tên ký hợp đồng
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

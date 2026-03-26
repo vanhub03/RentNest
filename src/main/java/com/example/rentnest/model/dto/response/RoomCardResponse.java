@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
@@ -20,5 +21,7 @@ public class RoomCardResponse {
     private String location;
     private String thumbnail;
     private String bedType;
+    private String floor;
     private int bathCount;
+    private List<String> images;
 }

@@ -14,8 +14,6 @@ import java.util.List;
 public interface RoomService extends BaseService<Room, Long>{
 
     Page<RoomCardResponse> getRoomByLandlord(Long landlordId, String keyword, String status, Long hostelId, Pageable pageable);
-    RoomCardResponse updateByLandlord(Long id, RoomCreateRequestDTO roomCreateRequestDTO, List<MultipartFile> listImage, Long landlordID
-    ) throws IOException;
     void deleteRoom(Room room);
 }
 

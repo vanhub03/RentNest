@@ -6,6 +6,7 @@ import com.example.rentnest.model.Room;
 import com.example.rentnest.model.RoomImage;
 import com.example.rentnest.model.dto.request.RoomCreateRequestDTO;
 import com.example.rentnest.model.dto.response.MessageResponse;
+import com.example.rentnest.model.dto.response.RoomCardResponse;
 import com.example.rentnest.repository.RoomRepository;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.HostelService;
@@ -38,6 +39,8 @@ public class RoomController {
     private HostelService hostelService;
     @Autowired
     private RoomRepository roomRepository;
+    @Autowired
+    private RoomImageService roomImageService;
 
     @PostMapping
     public ResponseEntity<?> addRoom(@RequestParam("rooms") String Json,
@@ -75,17 +78,58 @@ public class RoomController {
 
 
     @PutMapping("/{id}") // PUT /api/cars/{id}
+    @Transactional
     public ResponseEntity<?> updateRoom(@PathVariable Long id,
-                           @RequestParam("room") String roomJson,
+                           @RequestParam("rooms") String roomJson,
                            @RequestPart(value = "images", required = false) List<MultipartFile> imagesInput,
                            @AuthenticationPrincipal UserDetailsImpl userDetails ) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         RoomCreateRequestDTO roomCreateRequestDTO = objectMapper.readValue(roomJson, RoomCreateRequestDTO.class);
-        return ResponseEntity.ok(roomService.updateByLandlord(id,roomCreateRequestDTO,imagesInput,userDetails.getId()));
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+        if (!room.getHostel().getOwner().getId().equals(userDetails.getId())) {
+            throw new RuntimeException("Ban khong co quyen sua phong nay");
+        }
+        room.setRoomName(roomCreateRequestDTO.getRoomName());
+        room.setArea(roomCreateRequestDTO.getArea());
+        room.setFloor(roomCreateRequestDTO.getFloor());
+        room.setBasePrice(roomCreateRequestDTO.getBasePrice());
+        room.setBedType(roomCreateRequestDTO.getBedType());
+        room.setBathCount(roomCreateRequestDTO.getBathCount());
+        room.setBedType(roomCreateRequestDTO.getBedType());
+        room.setStatus(RoomStatus.valueOf(roomCreateRequestDTO.getStatus()));
+        roomService.save(room);
+        if(imagesInput != null) { // Nếu có ảnh mới
+            List<RoomImage> images = roomImageService.findByRoomId(id); // Lấy danh sách ảnh cũ
+            for(RoomImage image : images) {
+                cloudinaryService.deleteImageByUrl(image.getUrl()); // Xóa ảnh khỏi Cloudinary
+            }
+            roomImageService.deleteAllByRoomId(id); // Xóa ảnh khỏi DB
 
+
+            for(MultipartFile imageUpdate : imagesInput) { // Upload ảnh mới
+                String imageUrl = cloudinaryService.uploadImage((imageUpdate));
+                RoomImage roomImage = RoomImage.builder()
+                        .room(room)
+                        .url(imageUrl)
+                        .build();
+                roomImageService.save(roomImage);
+            }
+        }
+        return ResponseEntity.ok(RoomCardResponse.builder()
+                .id(room.getId())
+                .title(room.getRoomName())
+                .area(room.getArea())
+                .price(room.getBasePrice())
+                .status(room.getStatus().name())
+                .location(room.getHostel() != null ? room.getHostel().getName() : "")
+                .bedType(room.getBedType())
+                .bathCount(room.getBathCount())
+                .build());
     }
 
-    @DeleteMapping("/room/{id}")
+    @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> deleteRoom(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails){
         Room room = roomRepository.findById(id).orElseThrow(() -> new RuntimeException("Room not found"));
         if(!room.getHostel().getOwner().getId().equals(userDetails.getId())) {

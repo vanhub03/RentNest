@@ -27,6 +27,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository> implements RoomService {
@@ -54,45 +55,6 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
     }
 
     @Override
-    public RoomCardResponse updateByLandlord(Long id, RoomCreateRequestDTO roomCreateRequestDTO, List<MultipartFile> listImage, Long landlordID) throws IOException {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
-        if (!room.getHostel().getOwner().getId().equals(landlordID)) {
-            throw new RuntimeException("Ban khong co quyen sua phong nay");
-        }
-        ObjectMapper objectMapper = new ObjectMapper();
-        RoomCardResponse roomCardResponse = new RoomCardResponse();
-        room.setRoomName(roomCreateRequestDTO.getRoomName());
-        room.setArea(roomCreateRequestDTO.getArea());
-        room.setFloor(roomCreateRequestDTO.getFloor());
-        room.setBasePrice(roomCreateRequestDTO.getBasePrice());
-        room.setBedType(roomCreateRequestDTO.getBedType());
-        room.setBathCount(roomCreateRequestDTO.getBathCount());
-        room.setBedType(roomCreateRequestDTO.getBedType());
-        room.setStatus(RoomStatus.valueOf(roomCreateRequestDTO.getStatus()));
-        if(listImage != null) { // Nếu có ảnh mới
-            List<RoomImage> images = roomImageService.findByRoomId(id); // Lấy danh sách ảnh cũ
-            for(RoomImage image : images) {
-                cloudinaryService.deleteImageByUrl(image.getUrl()); // Xóa ảnh khỏi Cloudinary
-            }
-            roomImageService.deleteAllByRoomId(room.getId()); // Xóa ảnh khỏi DB
-
-
-            for(MultipartFile imageUpdate : listImage) { // Upload ảnh mới
-                String imageUrl = cloudinaryService.uploadImage((imageUpdate));
-                RoomImage roomImage = RoomImage.builder()
-                        .room(room)
-                        .url(imageUrl)
-                        .build();
-                roomImageService.save(roomImage);
-            }
-        }
-
-
-        return mapToRoomResponse(room);
-    }
-
-    @Override
     public void deleteRoom(Room room) {
 
         roomRepository.delete(room);
@@ -107,7 +69,9 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
                 .status(room.getStatus().name())
                 .location(room.getHostel() != null ? room.getHostel().getName() : "")
                 .bedType(room.getBedType())
+                .floor(room.getFloor().toString())
                 .bathCount(room.getBathCount())
+                .images(room.getImages().stream().map(RoomImage::getUrl).collect(Collectors.toList()))
                 .build();
     }
 }

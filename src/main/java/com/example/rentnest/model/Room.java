@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE rooms set is_deleted = true where id = ?")
+@SQLDelete(sql = "UPDATE rooms set is_deleted = 1 where id = ?")
 @SQLRestriction("is_deleted = 0")
 public class Room extends BaseEntity{
 
@@ -44,9 +44,16 @@ public class Room extends BaseEntity{
     private List<RoomImage> images;
 
     @Column(name = "bed_type")
-    @Nationalized
     private String bedType;
 
     @Column(name = "bath_count")
-    private int bathCount; //So nha ve sinh
+    private int bathCount;
+
+    // Danh sách những người đang lưu trú trong phòng này
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    private List<Occupant> occupants;
+
+    // Danh sách lịch sử chốt số điện nước của phòng này
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    private List<MeterReading> meterReadings;
 }

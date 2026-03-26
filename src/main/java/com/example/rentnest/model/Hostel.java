@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE hostel set is_deleted = true where id = ?")
+@SQLDelete(sql = "UPDATE hostel set is_deleted = 1 where id = ?")
 @SQLRestriction("is_deleted = 0")
 public class Hostel extends BaseEntity{
 
