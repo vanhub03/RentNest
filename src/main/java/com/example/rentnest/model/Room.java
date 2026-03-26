@@ -22,6 +22,7 @@ import java.util.List;
 public class Room extends BaseEntity{
 
     @Column(name = "room_name", nullable = false)
+    @Nationalized
     private String roomName;
 
     private Double area; //dien tich
@@ -43,8 +44,9 @@ public class Room extends BaseEntity{
     private List<RoomImage> images;
 
     @Column(name = "bed_type")
+    @Nationalized
     private String bedType;
 
     @Column(name = "bath_count")
-    private int bathCount;
+    private int bathCount; //So nha ve sinh
 }

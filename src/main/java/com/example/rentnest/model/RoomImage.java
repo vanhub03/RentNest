@@ -18,7 +18,7 @@ public class RoomImage extends BaseEntity{
     private String publicId;
 
     @Column(name = "is_thumbnail")
-    private boolean isThumbnail = false;
+    private boolean isThumbnail = false; // anh dai dien
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id")
