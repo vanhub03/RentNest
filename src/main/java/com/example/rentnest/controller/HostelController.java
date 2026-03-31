@@ -15,6 +15,7 @@ import com.example.rentnest.service.cloudinary.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
@@ -41,6 +42,8 @@ public class HostelController {
     private HostelRepository hostelRepository;
     @Autowired
     private HostelImageRepository hostelImageRepository;
+    @Autowired
+    private RoomService roomService;
 
     @PostMapping
     public ResponseEntity<?> addHostel(@RequestParam("hostels") String Json,
@@ -58,6 +61,7 @@ public class HostelController {
                 .districtCode(hostelCreateRequestDTO.getDistrictCode())
                 .district(hostelCreateRequestDTO.getDistrict())
                 .cityCode(hostelCreateRequestDTO.getCityCode())
+                .city(hostelCreateRequestDTO.getCity())
                 .description(hostelCreateRequestDTO.getDescription())
                 .owner(landlord)
                 .build();
@@ -79,8 +83,9 @@ public class HostelController {
     }
 
     @PutMapping("/{id}") // PUT /api/cars/{id}
+    @Transactional
     public ResponseEntity<?> updateHostel(@PathVariable Long id,
-                                        @RequestParam("hostel") String hostelJson,
+                                        @RequestParam("hostels") String hostelJson,
                                         @RequestPart(value = "images", required = false) List<MultipartFile> listImage,
                                         @AuthenticationPrincipal UserDetailsImpl userDetails ) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -133,11 +138,16 @@ public class HostelController {
                 .city(hostel.getCity())
                 .build();
     }
-    @DeleteMapping("/hostel/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteHostel(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails){
         Hostel hostel = hostelRepository.findById(id).orElseThrow(() -> new RuntimeException("Hostel not found"));
         if(!hostel.getOwner().getId().equals(userDetails.getId())) {
-            throw new RuntimeException("Ban khong co quyen sua phong nay");
+//            throw new RuntimeException("Ban khong co quyen sua phong nay");
+            return ResponseEntity.badRequest().body(new MessageResponse("Bạn không có quyền sửa phòng này"));
+        }
+        if(roomService.existsByHostelIdAndStatus(hostel.getId(), RoomStatus.RENTED)){
+//            throw new RuntimeException("Khong the xoa toa nha co phong dang cho thue");
+            return ResponseEntity.badRequest().body(new MessageResponse("Không thể xóa tòa nhà có phòng đang cho thuê"));
         }
         List<HostelImage> hostelImages = hostelImageService.findByHostelId(id);
         for (HostelImage image : hostelImages){

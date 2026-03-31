@@ -1,6 +1,8 @@
 package com.example.rentnest.service.impl;
 
 import com.example.rentnest.model.Hostel;
+import com.example.rentnest.model.HostelImage;
+import com.example.rentnest.model.RoomImage;
 import com.example.rentnest.model.dto.request.RoomCreateRequestDTO;
 import com.example.rentnest.model.dto.response.HostelCardResponse;
 import com.example.rentnest.repository.HostelRepository;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class HostelServiceImpl extends BaseServiceImpl<Hostel, Long, HostelRepository> implements HostelService {
@@ -53,12 +56,16 @@ public class HostelServiceImpl extends BaseServiceImpl<Hostel, Long, HostelRepos
                 .name(hostel.getName())
                 .addressDetail(hostel.getAddressDetail())
                 .ward(hostel.getWard())
+                .wardCode(hostel.getWardCode())
                 .district(hostel.getDistrict())
+                .districtCode(hostel.getDistrictCode())
                 .city(hostel.getCity())
+                .cityCode(hostel.getCityCode())
                 .description(hostel.getDescription())
                 .roomCount(hostel.getRooms() != null ? hostel.getRooms().size() : 0)
                 .serviceCount(hostel.getServices() != null ? hostel.getServices().size() : 0)
                 .imageCount(hostel.getImages() != null ? hostel.getImages().size() : 0)
+                .images(hostel.getImages().stream().map(HostelImage::getUrl).collect(Collectors.toList()))
                 .build();
     }
 

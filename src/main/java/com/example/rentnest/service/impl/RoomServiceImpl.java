@@ -60,6 +60,21 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
         roomRepository.delete(room);
     }
 
+    @Override
+    public boolean existsByHostelIdAndStatus(Long hostelId, RoomStatus status) {
+        return roomRepository.existsByHostelIdAndStatus(hostelId, status);
+    }
+
+    @Override
+    public List<Room> findTop4ByOrderByCreatedAtDesc() {
+        return roomRepository.findTop4ByOrderByCreatedAtDesc();
+    }
+
+    @Override
+    public List<String> findAvailableLocations() {
+        return roomRepository.findAvailableLocations();
+    }
+
     private RoomCardResponse mapToRoomResponse(Room room) {
         return RoomCardResponse.builder()
                 .id(room.getId())
