@@ -19,6 +19,7 @@ public interface RoomService extends BaseService<Room, Long>{
     boolean existsByHostelIdAndStatus(Long hostelId, RoomStatus status);
     List<Room> findTop4ByOrderByCreatedAtDesc();
     List<String> findAvailableLocations();
+    List<RoomCardResponse> getAvailableRooms(Long landlordId);
 }
 
 

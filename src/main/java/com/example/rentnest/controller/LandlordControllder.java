@@ -2,8 +2,10 @@ package com.example.rentnest.controller;
 
 import com.example.rentnest.model.dto.response.HostelCardResponse;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
+import com.example.rentnest.model.dto.response.TenantResponse;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.HostelService;
+import com.example.rentnest.service.OccupantService;
 import com.example.rentnest.service.RoomService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,16 +20,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/landlord")
 @PreAuthorize("hasAuthority('LANDLORD')")
 public class LandlordControllder {
     private final HostelService hostelService;
     private final RoomService roomService;
+    private final OccupantService occupantService;
 
-    public LandlordControllder(HostelService hostelService, RoomService roomService) {
+    public LandlordControllder(HostelService hostelService, RoomService roomService, OccupantService occupantService) {
         this.hostelService = hostelService;
         this.roomService = roomService;
+        this.occupantService = occupantService;
     }
 
     @GetMapping("/hostels")
@@ -52,5 +58,23 @@ public class LandlordControllder {
     ){
         Page<RoomCardResponse> response = roomService.getRoomByLandlord(userDetails.getId(), keyword, status, hostelId, pageable);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<RoomCardResponse>> getAvailableRooms(@AuthenticationPrincipal UserDetailsImpl userDetails){
+        List<RoomCardResponse> rooms = roomService.getAvailableRooms(userDetails.getId());
+        return ResponseEntity.ok(rooms);
+    }
+
+
+    @GetMapping("/tenants")
+    public ResponseEntity<Page<TenantResponse>> getTenants(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String keyword,
+            @AuthenticationPrincipal UserDetailsImpl userDetails){
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<TenantResponse> responses = occupantService.getTenantsByLandlord(userDetails.getId(), keyword, pageable);
+        return ResponseEntity.ok(responses);
     }
 }

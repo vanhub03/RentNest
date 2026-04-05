@@ -23,5 +23,6 @@ public class RoomCardResponse {
     private String bedType;
     private String floor;
     private int bathCount;
+    private Long hostelId;
     private List<String> images;
 }

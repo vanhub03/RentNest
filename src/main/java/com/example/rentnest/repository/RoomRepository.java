@@ -2,6 +2,7 @@ package com.example.rentnest.repository;
 
 import com.example.rentnest.enums.RoomStatus;
 import com.example.rentnest.model.Room;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,4 +20,7 @@ public interface RoomRepository extends BaseRepository<Room, Long>{
             "FROM Room r JOIN r.hostel h " +
             "WHERE r.status = 'AVAILABLE'")
     List<String> findAvailableLocations();
+
+    @Query("SELECT r FROM Room r WHERE r.hostel.owner.id = :landlordId AND r.status = :status")
+    List<Room> findAvailableRoomsByLandlord(@Param("landlordId") Long landlordId, @Param("status") RoomStatus status);
 }

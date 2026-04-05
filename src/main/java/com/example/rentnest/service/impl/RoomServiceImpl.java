@@ -75,6 +75,13 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
         return roomRepository.findAvailableLocations();
     }
 
+    @Override
+    public List<RoomCardResponse> getAvailableRooms(Long landlordId) {
+        List<Room> availableRooms = roomRepository.findAvailableRoomsByLandlord(landlordId, RoomStatus.AVAILABLE);
+
+        return availableRooms.stream().map(this::mapToRoomResponse).collect(Collectors.toList());
+    }
+
     private RoomCardResponse mapToRoomResponse(Room room) {
         return RoomCardResponse.builder()
                 .id(room.getId())
@@ -86,7 +93,9 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
                 .bedType(room.getBedType())
                 .floor(room.getFloor().toString())
                 .bathCount(room.getBathCount())
+                .hostelId(room.getHostel().getId())
                 .images(room.getImages().stream().map(RoomImage::getUrl).collect(Collectors.toList()))
+                .thumbnail(room.getImages().get(0).getUrl())
                 .build();
     }
 }
