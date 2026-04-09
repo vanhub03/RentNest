@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface RoomService extends BaseService<Room, Long>{
@@ -20,6 +21,7 @@ public interface RoomService extends BaseService<Room, Long>{
     List<Room> findTop4ByOrderByCreatedAtDesc();
     List<String> findAvailableLocations();
     List<RoomCardResponse> getAvailableRooms(Long landlordId);
+    Page<RoomCardResponse> getPublicRooms(String cityCode, String wardCode, BigDecimal minPrice, BigDecimal maxPrice, String sort, int page, int size);
 }
 
 

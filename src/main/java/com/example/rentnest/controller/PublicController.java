@@ -3,11 +3,14 @@ package com.example.rentnest.controller;
 import com.example.rentnest.model.Room;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
 import com.example.rentnest.service.RoomService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -52,5 +55,19 @@ public class PublicController {
     public ResponseEntity<List<String>> getAvailableLocations(){
         List<String> locations = roomService.findAvailableLocations();
         return ResponseEntity.ok(locations);
+    }
+
+    @GetMapping("/rooms")
+    public ResponseEntity<?> getPublicRooms(
+            @RequestParam(required = false) String cityCode,
+            @RequestParam(required = false) String wardCode,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "6") int size
+            ){
+        Page<RoomCardResponse> result = roomService.getPublicRooms(cityCode, wardCode, minPrice, maxPrice, sort, page, size);
+        return ResponseEntity.ok(result);
     }
 }

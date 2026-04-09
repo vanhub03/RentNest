@@ -18,13 +18,16 @@ import com.example.rentnest.service.RoomService;
 import com.example.rentnest.service.cloudinary.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -80,6 +83,21 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
         List<Room> availableRooms = roomRepository.findAvailableRoomsByLandlord(landlordId, RoomStatus.AVAILABLE);
 
         return availableRooms.stream().map(this::mapToRoomResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<RoomCardResponse> getPublicRooms(String cityCode, String wardCode, BigDecimal minPrice, BigDecimal maxPrice, String sort, int page, int size) {
+        Sort sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
+        if("PRICE_ASC".equalsIgnoreCase(sort)){
+            sortObj = Sort.by(Sort.Direction.ASC, "basePrice");
+        }else if("PRICE_DESC".equalsIgnoreCase(sort)){
+            sortObj = Sort.by(Sort.Direction.DESC, "basePrice");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Specification<Room> spec = RoomSpecification.filterPublicRooms(cityCode, wardCode, minPrice, maxPrice);
+        Page<Room> rooms = roomRepository.findAll(spec, pageable);
+        return rooms.map(this::mapToRoomResponse);
     }
 
     private RoomCardResponse mapToRoomResponse(Room room) {
