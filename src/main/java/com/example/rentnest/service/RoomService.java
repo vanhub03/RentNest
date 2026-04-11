@@ -5,6 +5,7 @@ import com.example.rentnest.model.Room;
 import com.example.rentnest.model.dto.request.RoomCreateRequestDTO;
 import com.example.rentnest.model.dto.response.HostelCardResponse;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
+import com.example.rentnest.model.dto.response.RoomDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,7 @@ public interface RoomService extends BaseService<Room, Long>{
     List<String> findAvailableLocations();
     List<RoomCardResponse> getAvailableRooms(Long landlordId);
     Page<RoomCardResponse> getPublicRooms(String cityCode, String wardCode, BigDecimal minPrice, BigDecimal maxPrice, String sort, int page, int size);
+    RoomDetailResponse getRoomDetailPublic(Long id);
 }
 
 

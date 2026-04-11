@@ -8,6 +8,7 @@ import com.example.rentnest.model.RoomImage;
 import com.example.rentnest.model.dto.request.RoomCreateRequestDTO;
 import com.example.rentnest.model.dto.response.HostelCardResponse;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
+import com.example.rentnest.model.dto.response.RoomDetailResponse;
 import com.example.rentnest.repository.ContractRepository;
 import com.example.rentnest.repository.RoomRepository;
 import com.example.rentnest.repository.specification.HostelSpecification;
@@ -98,6 +99,35 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
         Specification<Room> spec = RoomSpecification.filterPublicRooms(cityCode, wardCode, minPrice, maxPrice);
         Page<Room> rooms = roomRepository.findAll(spec, pageable);
         return rooms.map(this::mapToRoomResponse);
+    }
+
+    @Override
+    public RoomDetailResponse getRoomDetailPublic(Long id) {
+        Room room = roomRepository.findById(id).orElseThrow(()->new RuntimeException("Phòng không tồn tại hoặc đã bị xóa"));
+
+        return RoomDetailResponse.builder()
+                .id(room.getId())
+                .roomName(room.getRoomName() + " " + room.getHostel().getName())
+                .area(room.getArea())
+                .basePrice(room.getBasePrice())
+                .status(room.getStatus().name())
+                .bedType(room.getBedType())
+                .bathCount(room.getBathCount())
+                .hostelName(room.getHostel().getName())
+                .fullAddress(room.getHostel().getAddressDetail() + ", " + room.getHostel().getWard() + ", " + room.getHostel().getCity())
+                .description(room.getHostel().getDescription())
+                .images(room.getImages() != null ? room.getImages().stream().map(RoomImage::getUrl).collect(Collectors.toList()) : List.of())
+                .services(room.getHostel().getServices() != null ?
+                        room.getHostel().getServices().stream().map(
+                                a -> RoomDetailResponse.ServiceDto.builder()
+                                        .serviceName(a.getServiceName())
+                                        .price(a.getUnitPrice())
+                                        .unit(a.getUnitName())
+                                        .build()).collect(Collectors.toList()) : List.of()
+                        )
+                .landlordName(room.getHostel().getOwner().getFullname())
+                .landlordPhone(room.getHostel().getOwner().getPhoneNumber())
+                .build();
     }
 
     private RoomCardResponse mapToRoomResponse(Room room) {

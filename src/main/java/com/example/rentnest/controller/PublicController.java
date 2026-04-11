@@ -5,10 +5,7 @@ import com.example.rentnest.model.dto.response.RoomCardResponse;
 import com.example.rentnest.service.RoomService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -69,5 +66,10 @@ public class PublicController {
             ){
         Page<RoomCardResponse> result = roomService.getPublicRooms(cityCode, wardCode, minPrice, maxPrice, sort, page, size);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/rooms/{id}")
+    public ResponseEntity<?> getRoomDetail(@PathVariable Long id){
+        return ResponseEntity.ok(roomService.getRoomDetailPublic(id));
     }
 }
