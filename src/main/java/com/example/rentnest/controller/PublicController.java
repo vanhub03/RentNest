@@ -1,23 +1,44 @@
 package com.example.rentnest.controller;
 
+import com.example.rentnest.Utils.EmailUtils;
 import com.example.rentnest.model.Room;
+import com.example.rentnest.model.dto.response.MessageResponse;
+import com.example.rentnest.model.dto.response.RequestRentRoom;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
+import com.example.rentnest.service.EmailService;
+import com.example.rentnest.service.RentalRequestService;
 import com.example.rentnest.service.RoomService;
+import com.example.rentnest.service.UserService;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/public")
 public class PublicController {
 
     private final RoomService roomService;
+    private final Configuration configuration;
+    private final EmailService emailService;
+    private final RentalRequestService rentalRequestService;
 
-    public PublicController(RoomService roomService) {
+    public PublicController(RoomService roomService , Configuration configuration, EmailService emailService, RentalRequestService rentalRequestService) {
         this.roomService = roomService;
+        this.configuration = configuration;
+        this.emailService = emailService;
+        this.rentalRequestService = rentalRequestService;
     }
 
     @GetMapping("/latest-rooms")
@@ -44,7 +65,7 @@ public class PublicController {
                    .bathCount(room.getBathCount())
                    .floor(room.getFloor().toString())
                     .build();
-        }).toList();
+        }).collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
 
@@ -71,5 +92,14 @@ public class PublicController {
     @GetMapping("/rooms/{id}")
     public ResponseEntity<?> getRoomDetail(@PathVariable Long id){
         return ResponseEntity.ok(roomService.getRoomDetailPublic(id));
+    }
+    @PostMapping("/request-rooms")
+    public ResponseEntity<?> requestRentRoom(@RequestBody RequestRentRoom requestRentRoom ) throws IOException, TemplateException {
+        rentalRequestService.createRequest(requestRentRoom);
+
+        return ResponseEntity.ok(new MessageResponse("Gửi yêu cầu thuê phòng thành công"));
+
+
+
     }
 }

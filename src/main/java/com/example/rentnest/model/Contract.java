@@ -1,5 +1,6 @@
 package com.example.rentnest.model;
 
+import com.example.rentnest.enums.ContractStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -42,5 +43,7 @@ public class Contract extends BaseEntity {
     @Column(name = "contract_file_public_id")
     private String contractFilePublicId;
 
-    private boolean isActive = true; // true: Hợp đồng đang hiệu lực
+    @Enumerated(EnumType.STRING) private ContractStatus status;
+
+ //   private boolean isActive = true; // true: Hợp đồng đang hiệu lực
 }

@@ -1,5 +1,6 @@
 package com.example.rentnest.service.impl;
 
+import com.example.rentnest.enums.ContractStatus;
 import com.example.rentnest.enums.RoomStatus;
 import com.example.rentnest.model.Contract;
 import com.example.rentnest.model.Occupant;
@@ -94,7 +95,7 @@ public class ContractServiceImpl extends BaseServiceImpl<Contract, Long, Contrac
                 .endDate(request.getEndDate())
                 .depositAmount(request.getDepositAmount())
                 .contractFileUrl(contractUrl)
-                .isActive(true)
+                .status(ContractStatus.ACTIVE)
                 .build();
         contractRepository.save(contract);
     }
