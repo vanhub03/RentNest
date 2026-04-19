@@ -24,6 +24,9 @@ public class RentalRequest extends BaseEntity {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    @Column(name = "identity_card")
+    private String cccd;
+
     @Column(name = "expected_move_in_date")
     private LocalDate expectedMoveInDate;
 

@@ -55,6 +55,7 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
                 .room(room.get())
                 .expectedMoveInDate(requestRentRoom.getExpectedMoveInDate())
                 .depositAmount(room.get().getBasePrice())
+                .cccd(requestRentRoom.getCccd())
                 .note(requestRentRoom.getNotes())
                 .status(RequestStatus.PENDING)
                 .build();

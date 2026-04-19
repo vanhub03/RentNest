@@ -14,6 +14,7 @@ import java.time.LocalDate;
 public class RequestRentRoom {
     private Long roomId;
     private Long userId;
+    private String cccd;
     private LocalDate expectedMoveInDate;
     private String notes;
 
