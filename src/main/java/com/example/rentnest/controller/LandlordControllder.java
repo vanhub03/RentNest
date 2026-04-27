@@ -2,13 +2,16 @@ package com.example.rentnest.controller;
 
 import com.example.rentnest.enums.RequestStatus;
 import com.example.rentnest.model.RentalRequest;
+import com.example.rentnest.model.dto.request.RentalRequestStatusUpdateRequest;
 import com.example.rentnest.model.dto.response.*;
 import com.example.rentnest.repository.RentalRequestRepository;
 import com.example.rentnest.repository.specification.RentalRequestSpecification;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.HostelService;
 import com.example.rentnest.service.OccupantService;
+import com.example.rentnest.service.RentalRequestService;
 import com.example.rentnest.service.RoomService;
+import freemarker.template.TemplateException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +21,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -33,12 +34,14 @@ public class LandlordControllder {
     private final RoomService roomService;
     private final OccupantService occupantService;
     private final RentalRequestRepository rentalRequestRepository;
+    private final RentalRequestService rentalRequestService;
 
-    public LandlordControllder(HostelService hostelService, RoomService roomService, OccupantService occupantService, RentalRequestRepository rentalRequestRepository) {
+    public LandlordControllder(HostelService hostelService, RoomService roomService, OccupantService occupantService, RentalRequestRepository rentalRequestRepository, RentalRequestService rentalRequestService) {
         this.hostelService = hostelService;
         this.roomService = roomService;
         this.occupantService = occupantService;
         this.rentalRequestRepository = rentalRequestRepository;
+        this.rentalRequestService = rentalRequestService;
     }
 
     @GetMapping("/hostels")
@@ -110,11 +113,31 @@ public class LandlordControllder {
                         .id(req.getId())
                         .tenantName(req.getTenant().getFullname())
                         .tenantPhone(req.getTenant().getPhoneNumber())
-                        .roomName(req.getTenant().getPhoneNumber())
+                        .roomId(req.getRoom().getId())
+                        .roomName(req.getRoom().getRoomName())
                         .hostelAddress(req.getRoom().getHostel().getAddressDetail())
                         .expectedMoveInDate(req.getExpectedMoveInDate())
                         .createdAt(req.getCreatedAt())
                         .status(req.getStatus().name())
                         .build()));
+    }
+
+    @GetMapping("/rental-requests/{id}")
+    public ResponseEntity<RentalRequestResponse> getRentalRequestDetail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(rentalRequestService.getRequestDetailForLandlord(userDetails.getId(), id));
+    }
+
+    @GetMapping("rental-requests/{id}/status")
+    public ResponseEntity<MessageResponse> updateRequestStatus(
+            @PathVariable Long id,
+            @RequestBody RentalRequestStatusUpdateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+            ) throws TemplateException, IOException {
+        RequestStatus status = RequestStatus.valueOf(request.getStatus());
+        rentalRequestService.updateStatus(userDetails.getId(), id, status, request.getRejectReason());
+        return ResponseEntity.ok(new MessageResponse("Cập nhật trạng thái thành công"));
     }
 }
