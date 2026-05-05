@@ -17,4 +17,5 @@ public interface RentalRequestRepository extends BaseRepository<RentalRequest, L
     Optional<RentalRequest> findByIdAndTenant_Id(Long id, Long tenantId);
     Optional<RentalRequest> findByIdAndRoom_Hostel_Owner_Id(Long id, Long ownerId);
     List<RentalRequest> findByRoomIdAndStatusAndIdNot(Long roomId, RequestStatus status, Long requestId);
+    long countByTenant_IdAndStatus(Long tenantId, RequestStatus status);
 }

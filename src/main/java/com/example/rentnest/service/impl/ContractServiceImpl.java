@@ -2,10 +2,9 @@ package com.example.rentnest.service.impl;
 
 import com.example.rentnest.enums.ContractStatus;
 import com.example.rentnest.enums.RoomStatus;
-import com.example.rentnest.model.Contract;
-import com.example.rentnest.model.Occupant;
-import com.example.rentnest.model.Room;
+import com.example.rentnest.model.*;
 import com.example.rentnest.model.dto.request.TenantOnboardRequest;
+import com.example.rentnest.model.dto.response.ContractPreviewResponse;
 import com.example.rentnest.repository.ContractRepository;
 import com.example.rentnest.repository.OccupantRepository;
 import com.example.rentnest.service.ContractService;
@@ -16,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,5 +99,97 @@ public class ContractServiceImpl extends BaseServiceImpl<Contract, Long, Contrac
                 .status(ContractStatus.ACTIVE)
                 .build();
         contractRepository.save(contract);
+    }
+
+    @Override
+    @Transactional
+    public Contract createDraftFromRentalRequest(RentalRequest rentalRequest) {
+        return contractRepository.findByRentalRequest_Id(rentalRequest.getId()).orElseGet(() -> {
+            Room room = rentalRequest.getRoom();
+            User tenant = rentalRequest.getTenant();
+            LocalDate startDate = rentalRequest.getExpectedMoveInDate() != null ? rentalRequest.getExpectedMoveInDate() : LocalDate.now().plusDays(7);
+            Occupant representative = Occupant.builder()
+                    .fullName(tenant.getFullname())
+                    .phoneNumber(tenant.getPhoneNumber())
+                    .identityCard(rentalRequest.getCccd())
+                    .isRepresentative(true)
+                    .isActive(false)
+                    .room(room)
+                    .userAccount(tenant)
+                    .build();
+            occupantRepository.save(representative);
+            Contract contract = Contract.builder()
+                    .room(room)
+                    .rentalRequest(rentalRequest)
+                    .representativeOccupant(representative)
+                    .startDate(startDate)
+                    .endDate(startDate.plusMonths(12).minusDays(1))
+                    .depositAmount(rentalRequest.getDepositAmount())
+                    .status(ContractStatus.WAITING_FOR_SIGNATURE)
+                    .build();
+            return contractRepository.save(contract);
+        });
+    }
+
+    @Override
+    public ContractPreviewResponse getPreviewForLandlord(Long landlordId, Long rentalRequestId) {
+        Contract contract = contractRepository.findByRentalRequest_IdAndRoom_Hostel_Owner_Id(rentalRequestId, landlordId).orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng nháp"));
+        return toPreviewResponse(contract);
+    }
+
+    @Override
+    public ContractPreviewResponse getPreviewForTenant(Long tenantId, Long rentalRequestId) {
+        Contract contract = contractRepository.findByRentalRequest_IdAndRentalRequest_Tenant_Id(rentalRequestId, tenantId).orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng nháp"));
+        return toPreviewResponse(contract);
+    }
+
+    private ContractPreviewResponse toPreviewResponse(Contract contract) {
+        RentalRequest rentalRequest = contract.getRentalRequest();
+        Room room = rentalRequest.getRoom();
+        Hostel hostel = room.getHostel();
+        User landlord = hostel.getOwner();
+        Occupant tenant = contract.getRepresentativeOccupant();
+        return ContractPreviewResponse.builder()
+                .id(contract.getId())
+                .rentalRequestId(rentalRequest.getId())
+                .contractCode(String.format("HD-%d-%03d", contract.getStartDate().getYear(), contract.getId()))
+                .status(contract.getStatus().name())
+                .createdAt(contract.getCreatedAt())
+                .startDate(contract.getStartDate())
+                .endDate(contract.getEndDate())
+                .durationMonths((int) ChronoUnit.MONTHS.between(contract.getStartDate(), contract.getEndDate().plusDays(1)))
+                .depositAmount(contract.getDepositAmount())
+                .monthlyRent(room.getBasePrice())
+                .paymentDay(5)
+                .services(toServiceChargeDtos(hostel))
+                .landlordName(landlord.getFullname())
+                .landlordPhone(landlord.getPhoneNumber())
+                .landlordAddress(hostel.getAddressDetail())
+                .tenantName(tenant.getFullName())
+                .tenantPhone(tenant.getPhoneNumber())
+                .tenantEmail(tenant.getUserAccount().getEmail())
+                .tenantIdentityCard(tenant.getIdentityCard())
+                .roomId(room.getId())
+                .roomName(room.getRoomName())
+                .hostelName(hostel.getName())
+                .hostelAddress(hostel.getAddressDetail())
+                .roomArea(room.getArea())
+                .roomFloor(room.getFloor())
+                .bathCount(room.getBathCount())
+                .build();
+    }
+
+    private List<ContractPreviewResponse.ServiceChargeDto> toServiceChargeDtos(Hostel hostel) {
+        if(hostel.getServices() == null || hostel.getServices().isEmpty()){
+            return List.of();
+        }
+        return hostel.getServices().stream()
+                .map(service -> ContractPreviewResponse.ServiceChargeDto.builder()
+                        .id(service.getId())
+                        .serviceName(service.getServiceName())
+                        .unitPrice(service.getUnitPrice())
+                        .unitName(service.getUnitName())
+                        .metered(service.isMetered())
+                        .build()).toList();
     }
 }

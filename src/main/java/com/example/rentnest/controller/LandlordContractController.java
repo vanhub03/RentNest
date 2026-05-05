@@ -7,10 +7,7 @@ import com.example.rentnest.service.ContractService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
@@ -44,5 +41,12 @@ public class LandlordContractController {
         catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/by-request/{requestId}/preview")
+    public ResponseEntity<?> getContractPreview(@PathVariable Long requestId,
+                                                @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(contractService.getPreviewForLandlord(userDetails.getId(), requestId));
     }
 }

@@ -130,7 +130,7 @@ public class LandlordControllder {
         return ResponseEntity.ok(rentalRequestService.getRequestDetailForLandlord(userDetails.getId(), id));
     }
 
-    @GetMapping("rental-requests/{id}/status")
+    @PostMapping("rental-requests/{id}/status")
     public ResponseEntity<MessageResponse> updateRequestStatus(
             @PathVariable Long id,
             @RequestBody RentalRequestStatusUpdateRequest request,

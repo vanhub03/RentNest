@@ -35,6 +35,9 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
     private Configuration configuration;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private ContractService contractService;
+
     @Override
     public void approveRequest(Long requestId, Long landlordId) {
 
@@ -73,7 +76,7 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
         model.put("tenantPhone", user.getPhoneNumber());
         model.put("expectedMoveInDate", requestRentRoom.getExpectedMoveInDate());
         model.put("requestMessage", requestRentRoom.getNotes());
-        model.put("actionUrl", "1");
+        model.put("actionUrl", "http://localhost:4200/landlord/rental-requests/" + rentalRequest.getId());
         String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, model);
         boolean sendMailCheck = EmailUtils.sendEmail(emailService, subject, // Gửi email
                 Collections.singletonList(room.get().getHostel().getOwner().getEmail()), // Gửi đến chu nha
@@ -119,6 +122,7 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
                             : "Không phù hợp với tiêu chí hiện tại"
             );
         } else {
+            rentalRequest.getRoom().setStatus(RoomStatus.RENTED);
             rentalRequest.setRejectReason(null);
         }
 
@@ -139,6 +143,7 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
 
             rentalRequestRepository.saveAll(pendingRequests);
             sendRentalRequestStatusEmail(rentalRequest);
+            contractService.createDraftFromRentalRequest(rentalRequest);
             for(RentalRequest request : pendingRequests) {
                 sendRentalRequestStatusEmail(request);
             }

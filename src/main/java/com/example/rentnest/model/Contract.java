@@ -24,6 +24,10 @@ public class Contract extends BaseEntity {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    @OneToOne
+    @JoinColumn(name = "rental_request_id", unique = true)
+    private RentalRequest rentalRequest;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "representative_occupant_id", nullable = false)
     private Occupant representativeOccupant; // Người đứng tên ký hợp đồng
