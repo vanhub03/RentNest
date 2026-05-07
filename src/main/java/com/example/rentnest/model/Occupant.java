@@ -44,7 +44,7 @@ public class Occupant extends BaseEntity {
     private boolean isActive = true;
 
     // Optional: Nếu khách tải App và tạo tài khoản, ta sẽ link tài khoản đó vào đây
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_account_id")
     private User userAccount;
 }

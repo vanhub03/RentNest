@@ -163,7 +163,7 @@ public class RentalRequestServiceImpl extends BaseServiceImpl<RentalRequest, Lon
         model.put("expectedMoveInDate", rentalRequest.getExpectedMoveInDate());
         model.put("requestStatus", rentalRequest.getStatus().name());
         model.put("rejectReason", rentalRequest.getRejectReason());
-        model.put("actionUrl", rentalRequest.getStatus() == RequestStatus.APPROVED ? "http://localhost:4200/rental-request/" + rentalRequest.getId() : "http://localhost:4200/rooms");
+        model.put("actionUrl", rentalRequest.getStatus() == RequestStatus.APPROVED ? "http://localhost:4200/rental-request" : "http://localhost:4200/rooms");
         String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, model);
         boolean sendMailCheck = EmailUtils.sendEmail(emailService, subject, // Gửi email
                 Collections.singletonList(rentalRequest.getTenant().getEmail()), // Gửi đến chu nha
