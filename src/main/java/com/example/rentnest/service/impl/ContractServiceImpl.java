@@ -4,6 +4,7 @@ import com.example.rentnest.enums.ContractStatus;
 import com.example.rentnest.enums.RoomStatus;
 import com.example.rentnest.model.*;
 import com.example.rentnest.model.dto.request.TenantOnboardRequest;
+import com.example.rentnest.model.dto.response.ContractListResponse;
 import com.example.rentnest.model.dto.response.ContractPreviewResponse;
 import com.example.rentnest.repository.ContractRepository;
 import com.example.rentnest.repository.OccupantRepository;
@@ -11,6 +12,9 @@ import com.example.rentnest.service.ContractService;
 import com.example.rentnest.service.RoomService;
 import com.example.rentnest.service.cloudinary.CloudinaryService;
 import jakarta.transaction.Transactional;
+import org.springframework.cglib.core.Local;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -141,6 +145,70 @@ public class ContractServiceImpl extends BaseServiceImpl<Contract, Long, Contrac
     public ContractPreviewResponse getPreviewForTenant(Long tenantId, Long rentalRequestId) {
         Contract contract = contractRepository.findByRentalRequest_IdAndRentalRequest_Tenant_Id(rentalRequestId, tenantId).orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng nháp"));
         return toPreviewResponse(contract);
+    }
+
+    @Override
+    public Page<ContractListResponse> getContractForLandlord(Long landlordId, String status, Pageable pageable) {
+        Page<Contract> contracts;
+        if("EXPIRING".equalsIgnoreCase(status)){
+            contracts = contractRepository.findExpiringContracts(landlordId, ContractStatus.ACTIVE, LocalDate.now(), LocalDate.now()
+                    .plusDays(30), pageable);
+        }else if(status != null && !status.isBlank()){
+            ContractStatus contractStatus = ContractStatus.valueOf(status.toUpperCase());
+            contracts = contractRepository.findByRoom_Hostel_Owner_IdAndStatus(landlordId, contractStatus, pageable);
+        }else{
+            contracts = contractRepository.findByRoom_Hostel_Owner_Id(landlordId, pageable);
+        }
+        return contracts.map(this::toListResponse);
+    }
+
+    @Override
+    public ContractListResponse renewContract(Long landlordId, Long contractId, int months) {
+        if(months < 1 || months > 36){
+            throw new RuntimeException("Thời gian gia hạn không hợp lệ");
+        }
+        Contract contract = contractRepository.findByIdAndRoom_Hostel_Owner_Id(contractId, landlordId).orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
+        LocalDate today = LocalDate.now();
+        if(contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.EXPIRED){
+            throw new RuntimeException("Chỉ có thể gia hạn hợp đồng đang có hiệu lực hoặc đã hết hạn");
+        }
+//        if(contract.getEndDate().isBefore(today)){
+//            throw new RuntimeException("Hợp đồng đã hết hạn, không thuộc nhóm sắp hết hạn");
+//        }
+        if(contract.getEndDate().isAfter(today.plusDays(30))){
+            throw new RuntimeException("Chỉ gia hạn hợp đồng sắp hết hạn trong 30 ngày");
+        }
+        contract.setEndDate(contract.getEndDate().plusMonths(months));
+        contract.setStatus(ContractStatus.ACTIVE);
+        return toListResponse(contractRepository.save(contract));
+    }
+
+    private ContractListResponse toListResponse(Contract contract){
+        Room room = contract.getRoom();
+        Hostel hostel = room.getHostel();
+        Occupant tenant = contract.getRepresentativeOccupant();
+        LocalDate today = LocalDate.now();
+        boolean expiringSoon = contract.getStatus() == ContractStatus.ACTIVE
+                && contract.getEndDate() != null
+                && !contract.getEndDate().isBefore(today)
+                && !contract.getEndDate().isAfter(today.plusDays(30));
+
+        return ContractListResponse.builder()
+                .id(contract.getId())
+                .rentalRequestId(contract.getRentalRequest() != null ? contract.getRentalRequest().getId() : null)
+                .contractCode(String.format("HD-%d-%30d", contract.getStartDate().getYear(), contract.getId()))
+                .tenantName(tenant.getFullName())
+                .tenantPhone(tenant.getPhoneNumber())
+                .roomId(room.getId())
+                .roomName(room.getRoomName())
+                .hostelName(hostel.getName())
+                .startDate(contract.getStartDate())
+                .endDate(contract.getEndDate())
+                .depositAmount(contract.getDepositAmount())
+                .status(contract.getStatus().name())
+                .expiringSoon(expiringSoon)
+                .contractFileUrl(contract.getContractFileUrl())
+                .build();
     }
 
     private ContractPreviewResponse toPreviewResponse(Contract contract) {

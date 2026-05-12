@@ -4,6 +4,8 @@ import com.example.rentnest.model.dto.request.TenantOnboardRequest;
 import com.example.rentnest.model.dto.response.MessageResponse;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.ContractService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,5 +50,25 @@ public class LandlordContractController {
                                                 @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         return ResponseEntity.ok(contractService.getPreviewForLandlord(userDetails.getId(), requestId));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getContracts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(contractService.getContractForLandlord(userDetails.getId(), status, pageable));
+    }
+
+    @PostMapping("/{contractId}/renew")
+    public ResponseEntity<?> renewContract(
+            @PathVariable Long contractId,
+            @RequestParam(defaultValue = "12") int months,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(contractService.renewContract(userDetails.getId(), contractId, months));
     }
 }
