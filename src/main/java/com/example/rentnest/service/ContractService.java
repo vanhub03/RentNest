@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface ContractService extends BaseService<Contract, Long>{
-    void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, MultipartFile cccdFront, MultipartFile cccdBack, Long landlordId) throws IOException;
+//    void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, MultipartFile cccdFront, MultipartFile cccdBack, Long landlordId) throws IOException;
     Contract createDraftFromRentalRequest(RentalRequest rentalRequest);
     ContractPreviewResponse getPreviewForLandlord(Long landlordId, Long rentalRequestId);
     ContractPreviewResponse getPreviewForTenant(Long tenantId, Long rentalRequestId);

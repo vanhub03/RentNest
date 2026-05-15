@@ -39,71 +39,71 @@ public class ContractServiceImpl extends BaseServiceImpl<Contract, Long, Contrac
         this.contractRepository = contractRepository;
     }
 
-    @Override
-    @Transactional
-    public void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, MultipartFile cccdFront, MultipartFile cccdBack, Long landlordId) throws IOException {
-        //xu ly phong
-        Room room = roomService.findById(request.getRoomId()).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
-        if(!room.getHostel().getOwner().getId().equals(landlordId)){
-            throw new RuntimeException("Bạn không có quyền thao tác trên phòng này");
-        }
-        if(room.getStatus() != RoomStatus.AVAILABLE){
-            throw new RuntimeException("Phòng này không ở trạng thái trống");
-        }
-        room.setStatus(RoomStatus.RENTED);
-        roomService.save(room);
-
-        //xu ly nguoi thue phong
-        List<Occupant> occupantList = new ArrayList<>();
-        Occupant representative = null;
-
-        for(TenantOnboardRequest.OccupantDto dto : request.getOccupants()){
-            Occupant occ = Occupant.builder()
-                    .fullName(dto.getFullName())
-                    .phoneNumber(dto.getPhoneNumber())
-                    .identityCard(dto.getIdentityCard())
-                    .isRepresentative(dto.isRepresentative())
-                    .isActive(true)
-                    .room(room)
-                    .build();
-            occupantList.add(occ);
-            if(occ.isRepresentative()){
-                representative = occ;
-            }
-        }
-        if(representative == null && !occupantList.isEmpty()){
-            representative = occupantList.get(0);
-            representative.setRepresentative(true);
-        }
-
-        if(representative != null){
-            if(cccdFront != null && !cccdFront.isEmpty()){
-                representative.setIdentityCardFrontUrl(cloudinaryService.uploadImage(cccdFront));
-            }
-            if(cccdBack != null && !cccdBack.isEmpty()){
-                representative.setIdentityCardBackUrl(cloudinaryService.uploadImage(cccdBack));
-            }
-        }
-
-        occupantRepository.saveAll(occupantList);
-
-        //xu ly file hop dong
-        String contractUrl = null;
-        if(contractFile != null && !contractFile.isEmpty()){
-            contractUrl = cloudinaryService.uploadImage(contractFile);
-        }
-
-        Contract contract = Contract.builder()
-                .room(room)
-                .representativeOccupant(representative)
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .depositAmount(request.getDepositAmount())
-                .contractFileUrl(contractUrl)
-                .status(ContractStatus.ACTIVE)
-                .build();
-        contractRepository.save(contract);
-    }
+//    @Override
+//    @Transactional
+//    public void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, MultipartFile cccdFront, MultipartFile cccdBack, Long landlordId) throws IOException {
+//        //xu ly phong
+//        Room room = roomService.findById(request.getRoomId()).orElseThrow(() -> new RuntimeException("Không tìm thấy phòng"));
+//        if(!room.getHostel().getOwner().getId().equals(landlordId)){
+//            throw new RuntimeException("Bạn không có quyền thao tác trên phòng này");
+//        }
+//        if(room.getStatus() != RoomStatus.AVAILABLE){
+//            throw new RuntimeException("Phòng này không ở trạng thái trống");
+//        }
+//        room.setStatus(RoomStatus.RENTED);
+//        roomService.save(room);
+//
+//        //xu ly nguoi thue phong
+//        List<Occupant> occupantList = new ArrayList<>();
+//        Occupant representative = null;
+//
+//        for(TenantOnboardRequest.OccupantDto dto : request.getOccupants()){
+//            Occupant occ = Occupant.builder()
+//                    .fullName(dto.getFullName())
+//                    .phoneNumber(dto.getPhoneNumber())
+//                    .identityCard(dto.getIdentityCard())
+//                    .isRepresentative(dto.isRepresentative())
+//                    .isActive(true)
+//                    .room(room)
+//                    .build();
+//            occupantList.add(occ);
+//            if(occ.isRepresentative()){
+//                representative = occ;
+//            }
+//        }
+//        if(representative == null && !occupantList.isEmpty()){
+//            representative = occupantList.get(0);
+//            representative.setRepresentative(true);
+//        }
+//
+//        if(representative != null){
+//            if(cccdFront != null && !cccdFront.isEmpty()){
+//                representative.setIdentityCardFrontUrl(cloudinaryService.uploadImage(cccdFront));
+//            }
+//            if(cccdBack != null && !cccdBack.isEmpty()){
+//                representative.setIdentityCardBackUrl(cloudinaryService.uploadImage(cccdBack));
+//            }
+//        }
+//
+//        occupantRepository.saveAll(occupantList);
+//
+//        //xu ly file hop dong
+//        String contractUrl = null;
+//        if(contractFile != null && !contractFile.isEmpty()){
+//            contractUrl = cloudinaryService.uploadImage(contractFile);
+//        }
+//
+//        Contract contract = Contract.builder()
+//                .room(room)
+//                .representativeOccupant(representative)
+//                .startDate(request.getStartDate())
+//                .endDate(request.getEndDate())
+//                .depositAmount(request.getDepositAmount())
+//                .contractFileUrl(contractUrl)
+//                .status(ContractStatus.ACTIVE)
+//                .build();
+//        contractRepository.save(contract);
+//    }
 
     @Override
     @Transactional

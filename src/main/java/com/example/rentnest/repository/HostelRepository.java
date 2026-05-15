@@ -12,4 +12,7 @@ import java.util.Optional;
 public interface HostelRepository extends BaseRepository<Hostel, Long>{
     Page<Hostel> findAll(Specification<Hostel> spec, Pageable pageable);
 
+    List<Hostel> findByOwner_Id(Long ownerId);
+
+    Optional<Hostel> findByIdAndOwner_Id(Long id, Long ownerId);
 }

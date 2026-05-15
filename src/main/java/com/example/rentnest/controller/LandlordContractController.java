@@ -26,24 +26,24 @@ public class LandlordContractController {
         this.contractService = contractService;
     }
 
-    @PostMapping("/onboard")
-    public ResponseEntity<?> onboardTenant(
-            @RequestPart("data") String jsonData,
-            @RequestPart(value = "contractFile", required = false) MultipartFile contractFile,
-            @RequestPart(value = "cccdFront", required = false) MultipartFile cccdFront,
-            @RequestPart(value = "cccdBack", required = false) MultipartFile cccdBack,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-            ){
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            TenantOnboardRequest request = mapper.readValue(jsonData, TenantOnboardRequest.class);
-            contractService.onboardNewTenant(request, contractFile, cccdFront, cccdBack, userDetails.getId());
-            return ResponseEntity.ok(new MessageResponse("Thêm khách thuê và kích hoạt hợp đồng thành công"));
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
-    }
+//    @PostMapping("/onboard")
+//    public ResponseEntity<?> onboardTenant(
+//            @RequestPart("data") String jsonData,
+//            @RequestPart(value = "contractFile", required = false) MultipartFile contractFile,
+//            @RequestPart(value = "cccdFront", required = false) MultipartFile cccdFront,
+//            @RequestPart(value = "cccdBack", required = false) MultipartFile cccdBack,
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+//            ){
+//        try {
+//            ObjectMapper mapper = new ObjectMapper();
+//            TenantOnboardRequest request = mapper.readValue(jsonData, TenantOnboardRequest.class);
+//            contractService.onboardNewTenant(request, contractFile, cccdFront, cccdBack, userDetails.getId());
+//            return ResponseEntity.ok(new MessageResponse("Thêm khách thuê và kích hoạt hợp đồng thành công"));
+//        }
+//        catch (Exception e) {
+//            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+//        }
+//    }
 
     @GetMapping("/by-request/{requestId}/preview")
     public ResponseEntity<?> getContractPreview(@PathVariable Long requestId,
