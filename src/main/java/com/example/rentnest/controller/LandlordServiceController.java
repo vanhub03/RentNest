@@ -1,6 +1,7 @@
 package com.example.rentnest.controller;
 
 import com.example.rentnest.model.dto.request.ServiceEntityRequest;
+import com.example.rentnest.model.dto.response.MessageResponse;
 import com.example.rentnest.model.dto.response.ServiceEntityResponse;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.ServiceEntityService;
@@ -43,5 +44,23 @@ public class LandlordServiceController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
             ){
         return ResponseEntity.ok(serviceEntityService.createService(userDetails.getId(), request));
+    }
+
+    @PutMapping
+    public ResponseEntity<ServiceEntityResponse> updateService(
+            @PathVariable Long id,
+            @RequestBody ServiceEntityRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(serviceEntityService.updateService(userDetails.getId(), id, request));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<MessageResponse> deleteService(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        serviceEntityService.deleteService(userDetails.getId(), id);
+        return ResponseEntity.ok(new MessageResponse("Đã xóa dịch vụ được chỉ định"));
     }
 }
