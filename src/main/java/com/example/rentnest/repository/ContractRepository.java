@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface ContractRepository extends BaseRepository<Contract, Long>{
@@ -31,4 +32,5 @@ public interface ContractRepository extends BaseRepository<Contract, Long>{
             );
     // vd: endDate cua hop dong la 1/5
     // hom nay la 1/5 -> fromDate la 1/5, toDate la 30/5
+    List<Contract> findByRoom_Hostel_Owner_IdAndRoom_Hostel_IdAndStatus(Long landlordId, Long hostelId, ContractStatus status);
 }
