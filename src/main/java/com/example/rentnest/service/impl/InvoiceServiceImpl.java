@@ -107,6 +107,26 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
         return toResponse(invoiceRepository.save(invoice));
     }
 
+    @Override
+    @Transactional
+    public Page<InvoiceResponse> getInvoicesForTenant(Long tenantId, String year, Pageable pageable) {
+        return invoiceRepository.findTenantInvoices(tenantId, year, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceResponse getCurrentUnpaidInvoiceForTenant(Long tenantId) {
+        return invoiceRepository.findCurrentUnoaidTenantInvoices(tenantId, Pageable.ofSize(1))
+                .stream().findFirst().map(this::toResponse).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceResponse getInvoiceForTenant(Long tenantId, Long invoiceId) {
+        Invoice invoice = invoiceRepository.findTenantInvoiceById(tenantId, invoiceId).orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+        return toResponse(invoice);
+    }
+
     private Invoice createOrReplaceInvoice(Contract contract, String invoiceMonth, Map<String, InvoiceGenerateRequest.MeterReadingDto> readingMap){
         //neu hoa don thang nay da ton tai thi cap nhat lai items/tong tien
         //neu chua co thi tao hoa don nhap PENDING
@@ -232,7 +252,7 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
                 .items(invoice.getItems() == null ? List.of() : invoice.getItems().stream()
                         .map(item -> InvoiceResponse.ItemDto.builder()
                                 .id(item.getId())
-                                .serviceId(item.getService().getId())
+                                .serviceId(item.getService() != null ? item.getService().getId() : null)
                                 .amount(item.getAmount())
                                 .build()).toList()
                         ).build();

@@ -15,4 +15,12 @@ public interface InvoiceService extends BaseService<Invoice, Long>{
     InvoiceStatsResponse getStatsForLandlord(Long landlordId, String invoiceMonth);
     List<InvoiceResponse> generateInvoices(Long landlordId, InvoiceGenerateRequest request);
     InvoiceResponse markPaid(Long landlordId, Long invoiceId);
+    //tenant xem danh sach hoa don cua chinh minh theo nam va phan trang
+    Page<InvoiceResponse> getInvoicesForTenant(Long tenantId, String year, Pageable pageable);
+    //tenant lay hoa don chua thanh toan gan nhat de FE hien thij noi bat phia tren
+    InvoiceResponse getCurrentUnpaidInvoiceForTenant(Long tenantId);
+    //tenant xem chi tiet hoa don
+    InvoiceResponse getInvoiceForTenant(Long tenantId, Long invoiceId);
+
+
 }
