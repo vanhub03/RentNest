@@ -56,7 +56,8 @@ public interface InvoiceRepository extends BaseRepository<Invoice, Long>{
                     "left join c.rentalRequest rr " +
                     "left join rr.tenant requestTenant " +
                     "where (u.id = :tenantId or requestTenant.id = :tenantId) " +
-                    "and (:year is null or i.invoiceMonth like concat(:year, '-%'))",
+                    "and (:year is null or i.invoiceMonth like concat(:year, '-%')) " +
+                    "order by i.invoiceMonth desc, i.id desc",
             countQuery = "select count(i) " +
                     "from Invoice i " +
                     "left join i.contract c " +
@@ -65,7 +66,8 @@ public interface InvoiceRepository extends BaseRepository<Invoice, Long>{
                     "left join c.rentalRequest rr " +
                     "left join rr.tenant requestTenant " +
                     "where (u.id = :tenantId or requestTenant.id = :tenantId) " +
-                    "and (:year is null or i.invoiceMonth like concat(:year, '-%'))"
+                    "and (:year is null or i.invoiceMonth like concat(:year, '-%')) " +
+                    "order by i.invoiceMonth desc, i.id desc"
     )
     Page<Invoice> findTenantInvoices(@Param("tenantId") Long tenantId, @Param("year") String year, Pageable pageable);
 

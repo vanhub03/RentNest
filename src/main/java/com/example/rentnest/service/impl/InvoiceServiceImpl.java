@@ -254,6 +254,7 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
                                 .id(item.getId())
                                 .serviceId(item.getService() != null ? item.getService().getId() : null)
                                 .amount(item.getAmount())
+                                .description(item.getDescription())
                                 .build()).toList()
                         ).build();
     }

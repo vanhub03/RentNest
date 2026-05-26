@@ -33,7 +33,7 @@ public class TenantInvoiceController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
             ){
         //sort ky hoa don moi nhat truoc, neu trung ky hoa don thi so sanh id moi hon truoc
-        Pageable pageable = PageRequest.of(page, size, Sort.by("invoiceMonth").descending().and(Sort.by("ids").descending()));
+        Pageable pageable = PageRequest.of(page, size);
         //tra page hoa don thuoc tenant hien tai
         return ResponseEntity.ok(invoiceService.getInvoicesForTenant(userDetails.getId(), normalizeYear(year), pageable));
     }
