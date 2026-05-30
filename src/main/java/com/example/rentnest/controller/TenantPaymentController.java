@@ -31,4 +31,20 @@ public class TenantPaymentController {
                 momoPaymentService.handleDepositReturn(userDetails.getId(), momoParams)
         );
     }
+
+    @PostMapping("/invoice/{invoiceId}/momo")
+    public ResponseEntity<?> createinvoicePaymentUrl(
+            @PathVariable Long invoiceId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(momoPaymentService.createInvoicePaymentUrl(userDetails.getId(), invoiceId));
+    }
+
+    @PostMapping("/invoice/momo-return")
+    public ResponseEntity<?> handleInvoiceReturn(
+            @RequestBody Map<String, String> momoParams,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.ok(momoPaymentService.handleInvoiceReturn(userDetails.getId(), momoParams));
+    }
 }

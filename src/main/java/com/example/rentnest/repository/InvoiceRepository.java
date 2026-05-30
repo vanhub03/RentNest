@@ -43,7 +43,7 @@ public interface InvoiceRepository extends BaseRepository<Invoice, Long>{
             "where (u.id = :tenantId or requestTenant.id = :tenantId) " +
             "and i.status <> com.example.rentnest.enums.InvoiceStatus.PAID " +
             "order by i.dueDate asc, i.id desc")
-    List<Invoice> findCurrentUnoaidTenantInvoices(@Param("tenantId") Long tenantId, Pageable pageable);
+    List<Invoice> findCurrentUnpaidTenantInvoices(@Param("tenantId") Long tenantId, Pageable pageable);
 
 
     //lay hoa don cua tenant theo nam
@@ -82,5 +82,5 @@ public interface InvoiceRepository extends BaseRepository<Invoice, Long>{
             "where i.id = :invoiceId and " +
             "(u.id = :tenantId or requestTenant.id = :tenantId)"
     )
-    Optional<Invoice> findTenantInvoiceById(@Param("tenantUd") Long tenantId, @Param("invoiceId") Long invoiceId);
+    Optional<Invoice> findTenantInvoiceById(@Param("tenantId") Long tenantId, @Param("invoiceId") Long invoiceId);
 }

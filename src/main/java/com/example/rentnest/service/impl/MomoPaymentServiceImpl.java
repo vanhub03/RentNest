@@ -2,15 +2,13 @@ package com.example.rentnest.service.impl;
 
 import com.example.rentnest.config.MomoProperties;
 import com.example.rentnest.enums.ContractStatus;
+import com.example.rentnest.enums.InvoiceStatus;
 import com.example.rentnest.enums.PaymentStatus;
 import com.example.rentnest.enums.RoomStatus;
 import com.example.rentnest.model.*;
 import com.example.rentnest.model.dto.response.MomoPaymentUrlResponse;
 import com.example.rentnest.model.dto.response.MomoReturnResponse;
-import com.example.rentnest.repository.ContractRepository;
-import com.example.rentnest.repository.DepositPaymentRepository;
-import com.example.rentnest.repository.OccupantRepository;
-import com.example.rentnest.repository.RoomRepository;
+import com.example.rentnest.repository.*;
 import com.example.rentnest.service.MomoPaymentService;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpEntity;
@@ -41,13 +39,17 @@ public class MomoPaymentServiceImpl implements MomoPaymentService {
     private final OccupantRepository occupantRepository; //kích hoạt người thuê đại diện sau thanh toán
     private final RoomRepository roomRepository; //chuyển status của room sang RENTED sau thanh toán
     private final RestTemplate restTemplate = new RestTemplate(); // gọi API tạo thanh toán sang momo
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
-    public MomoPaymentServiceImpl(MomoProperties momoProperties, ContractRepository contractRepository, DepositPaymentRepository depositPaymentRepository, OccupantRepository occupantRepository, RoomRepository roomRepository) {
+    public MomoPaymentServiceImpl(MomoProperties momoProperties, ContractRepository contractRepository, DepositPaymentRepository depositPaymentRepository, OccupantRepository occupantRepository, RoomRepository roomRepository, InvoiceRepository invoiceRepository, PaymentTransactionRepository paymentTransactionRepository) {
         this.momoProperties = momoProperties;
         this.contractRepository = contractRepository;
         this.depositPaymentRepository = depositPaymentRepository;
         this.occupantRepository = occupantRepository;
         this.roomRepository = roomRepository;
+        this.invoiceRepository = invoiceRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
     }
 
 
@@ -150,7 +152,170 @@ public class MomoPaymentServiceImpl implements MomoPaymentService {
         return buildReturnResponse(payment, false, "Thanh toán chưa thành công. Mã MoMo: " + payment.getMomoResultCode());
     }
 
-   private MomoReturnResponse  buildReturnResponse(DepositPayment payment, boolean success, String message){
+    @Override
+    public MomoPaymentUrlResponse createInvoicePaymentUrl(Long tenantId, Long invoiceId) {
+        validateMomoConfig();
+
+        Invoice invoice = invoiceRepository.findTenantInvoiceById(tenantId, invoiceId).orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn cần thanh toán"));
+        if(invoice.getStatus() == InvoiceStatus.PAID){
+            throw new RuntimeException("Hóa đơn này đã được thanh toán");
+        }
+        BigDecimal paidAmount = invoice.getAmountPaid() == null ? BigDecimal.ZERO : invoice.getAmountPaid(); //so tien can thanh toan
+        BigDecimal payableAmount = invoice.getTotalAmount().subtract(paidAmount); //so tien can thanh toan con lai
+        if(payableAmount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new RuntimeException("Số tiền hóa đơn không hợp lệ");
+        }
+        String amount = payableAmount.setScale(0, RoundingMode.HALF_DOWN).toPlainString(); // momo muốn nhận VND dạng số nguyên
+        String timestamp = LocalDateTime.now(APP_ZONE).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String orderId = "INV" + invoice.getId() + timestamp;
+        String requestId = "REQINV" + invoice.getId() + timestamp;
+        String orderInfo = "Thanh toán hóa đơn " + invoice.getId();
+        String extraData = "";
+        String redirectUrl = resolveInvoiceRedirectUrl();
+
+        String rawSignature = "accessKey=" + momoProperties.getAccessKey()
+                + "&amount=" + amount
+                + "&extraData=" + extraData
+                + "&ipnUrl=" + momoProperties.getIpnUrl()
+                + "&orderId=" + orderId
+                + "&orderInfo=" + orderInfo
+                + "&partnerCode=" + momoProperties.getPartnerCode()
+                + "&redirectUrl=" + redirectUrl
+                + "&requestId=" + requestId
+                + "&requestType=" + momoProperties.getRequestType(); // thự tự tham số đúng theo tài liệu của momo
+        String signature = signHmacSHA256(rawSignature, momoProperties.getSecretKey()); // ký request bằng secretKey momo cấp
+        Map<String, Object> requestBody = new LinkedHashMap<>(); // linkedhashmap giữ thứ tự field khi log hoặc debug cho dễ đọc
+        requestBody.put("partnerCode", momoProperties.getPartnerCode());
+        requestBody.put("requestType", momoProperties.getRequestType());
+        requestBody.put("ipnUrl", momoProperties.getIpnUrl());
+        requestBody.put("redirectUrl", redirectUrl);
+        requestBody.put("orderId", orderId);
+        requestBody.put("amount", amount);
+        requestBody.put("orderInfo", orderInfo);
+        requestBody.put("requestId", requestId);
+        requestBody.put("extraData", extraData);
+        requestBody.put("signature", signature);
+        requestBody.put("lang", momoProperties.getLang());
+
+        HttpHeaders headers = new HttpHeaders(); // Header HTTP gửi sang Momo
+        headers.setContentType(MediaType.APPLICATION_JSON); // momo api nhận json
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
+        Map<String, String> momoResponse = restTemplate.postForObject(momoProperties.getEndpoint(), httpEntity, Map.class);
+        if(momoResponse == null){
+            throw new RuntimeException("Momo không trả về giữ liệu thanh toán");
+        }
+
+        int resultCode = Integer.parseInt(String.valueOf(momoResponse.get("resultCode")));
+        if(resultCode != 0){
+            throw new RuntimeException(String.valueOf(momoResponse.getOrDefault("message", "Không tạo được thanh toán momo")));
+        }
+        String payUrl = String.valueOf(momoResponse.get("payUrl"));
+        if(!StringUtils.hasText(payUrl)){
+            throw new RuntimeException("Momo không trả về payurl");
+        }
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .invoice(invoice)
+                .amountPaid(payableAmount)
+                .paymentMethod("MOMO")
+                .status(PaymentStatus.PENDING)
+                .orderId(orderId)
+                .requestId(requestId)
+                .paymentUrl(payUrl)
+                .momoResultCode(resultCode)
+                .momoMessage(momoResponse.get("message"))
+                .note("Momo invoice payment " + invoice.getId())
+                .build();
+        paymentTransactionRepository.save(transaction);
+        return MomoPaymentUrlResponse.builder()
+                .orderId(orderId)
+                .requestId(requestId)
+                .amount(paidAmount)
+                .paymentUrl(payUrl)
+                .qrCodeUrl(momoResponse.get("qrCodeUrl"))
+                .deepLink(momoResponse.get("deepLink"))
+                .build();
+    }
+
+    private String resolveInvoiceRedirectUrl(){
+        String redirectUrl = momoProperties.getRedirectUrl();
+        if(redirectUrl.contains("payment-deposit/return")){
+            return redirectUrl.replace("payment-deposit/return","payment-invoice/return");
+        }
+        return redirectUrl.endsWith("/") ? redirectUrl + "payment-invoice/return" : redirectUrl + "/payment-invoice/return";
+    }
+
+    @Override
+    public MomoReturnResponse handleInvoiceReturn(Long tenantId, Map<String, String> momoParams) {
+        PaymentTransaction transaction = processInvoiceMomoResult(new HashMap<>(momoParams), tenantId);
+        if(transaction.getStatus() == PaymentStatus.SUCCESS){
+            return buildInvoiceReturnResponse(transaction, true, "Thanh toan hoa don thanh cong");
+        }
+        return buildInvoiceReturnResponse(transaction, true, "Thanh toan hoa don that bai");
+    }
+
+    private MomoReturnResponse buildInvoiceReturnResponse(PaymentTransaction transaction, boolean success, String message){
+        return MomoReturnResponse.builder()
+                .success(success)
+                .message(message)
+                .paymentType("INVOICE")
+                .invoiceId(transaction.getInvoice().getId())
+                .build();
+    }
+
+    private PaymentTransaction processInvoiceMomoResult(Map<String, Object> momoParams, Long tenantId){
+        if(!isValidSignature(momoParams)){
+            throw new RuntimeException("Chu ky momo khong hop le");
+        }
+        String orderId = String.valueOf(momoParams.get("orderId"));
+        PaymentTransaction transaction = paymentTransactionRepository.findByOrderId(orderId).orElseThrow(() -> new RuntimeException("hong tim thay giao dich hoa don"));
+        Invoice invoice = transaction.getInvoice();
+        if(tenantId != null && invoiceRepository.findTenantInvoiceById(tenantId, invoice.getId()).isEmpty()){
+            throw new RuntimeException("Ban khong co quyen xac nhan giao dich nay");
+        }
+        BigDecimal momoAmount = new BigDecimal(String.valueOf(momoParams.get("amount")));
+        if(transaction.getAmountPaid().compareTo(momoAmount) != 0){
+            markInvoicePaymentFailure(transaction, momoParams, "So tien momo tra khong dung");
+            throw new RuntimeException("So tien thanh toan khong hop le");
+        }
+        if(transaction.getStatus() == PaymentStatus.SUCCESS){
+            return transaction;
+        }
+
+        Integer resultCode = Integer.parseInt(momoParams.get("resultCode").toString());
+        if(resultCode == null || resultCode != 0){
+            markInvoicePaymentFailure(transaction, momoParams, "Momo tra ve ma that bai " + resultCode);
+            return transaction;
+        }
+
+        BigDecimal currentPaid = invoice.getAmountPaid() == null ? BigDecimal.ZERO : invoice.getAmountPaid();
+        BigDecimal newPaidAmount = currentPaid.add(transaction.getAmountPaid());
+        invoice.setAmountPaid(newPaidAmount);
+        invoice.setStatus(newPaidAmount.compareTo(invoice.getTotalAmount()) >= 0 ? InvoiceStatus.PAID : InvoiceStatus.PENDING);
+        invoiceRepository.save(invoice);
+
+        transaction.setStatus(PaymentStatus.SUCCESS);
+        transaction.setMomoTransId(momoParams.get("transId").toString());
+        transaction.setMomoResultCode(Integer.parseInt(String.valueOf(momoParams.get("resultCode"))));
+        transaction.setMomoMessage(momoParams.get("message").toString());
+        transaction.setMomoPayType(momoParams.get("payType").toString());
+        transaction.setTransactionDate(LocalDateTime.now(APP_ZONE));
+        transaction.setFailureReason(null);
+        paymentTransactionRepository.save(transaction);
+        return transaction;
+    }
+
+    private void markInvoicePaymentFailure(PaymentTransaction transaction, Map<String, Object> momoParams, String reason){
+        transaction.setStatus(PaymentStatus.FAILED);
+        transaction.setMomoTransId(String.valueOf(momoParams.get("transId")));
+        transaction.setMomoResultCode(Integer.parseInt(String.valueOf(momoParams.get("resultCode"))));
+        transaction.setMomoMessage(String.valueOf(momoParams.get("message")));
+        transaction.setMomoPayType(String.valueOf(momoParams.get("payType")));
+        transaction.setFailureReason(reason);
+        transaction.setTransactionDate(LocalDateTime.now(APP_ZONE));
+        paymentTransactionRepository.save(transaction);
+    }
+
+    private MomoReturnResponse  buildReturnResponse(DepositPayment payment, boolean success, String message){
         return MomoReturnResponse.builder()
                 .success(success)
                 .message(message)

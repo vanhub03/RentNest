@@ -9,4 +9,6 @@ public interface MomoPaymentService {
     MomoPaymentUrlResponse createDepositPaymentUrl(Long tenantId, Long rentalRequestId);
     MomoReturnResponse handleDepositReturn(Long tenantId, Map<String, String> momoParams);
 //    Map<String, Object> handleDepositIpn(Map<String, Object> momoParams);
+    MomoPaymentUrlResponse createInvoicePaymentUrl(Long tenantId, Long invoiceId);
+    MomoReturnResponse handleInvoiceReturn(Long tenantId, Map<String, String> momoParams);
 }

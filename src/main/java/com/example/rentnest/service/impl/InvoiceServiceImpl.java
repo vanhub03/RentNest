@@ -116,7 +116,7 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
     @Override
     @Transactional
     public InvoiceResponse getCurrentUnpaidInvoiceForTenant(Long tenantId) {
-        return invoiceRepository.findCurrentUnoaidTenantInvoices(tenantId, Pageable.ofSize(1))
+        return invoiceRepository.findCurrentUnpaidTenantInvoices(tenantId, Pageable.ofSize(1))
                 .stream().findFirst().map(this::toResponse).orElse(null);
     }
 
