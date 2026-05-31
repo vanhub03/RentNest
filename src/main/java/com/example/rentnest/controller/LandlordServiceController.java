@@ -55,7 +55,7 @@ public class LandlordServiceController {
         return ResponseEntity.ok(serviceEntityService.updateService(userDetails.getId(), id, request));
     }
 
-    @DeleteMapping
+    @DeleteMapping("{id}")
     public ResponseEntity<MessageResponse> deleteService(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails

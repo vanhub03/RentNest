@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE services set is_deleted = true where id = ?")
+@SQLDelete(sql = "UPDATE services set is_deleted = 1 where id = ?")
 @SQLRestriction("is_deleted = 0")
 public class ServiceEntity extends BaseEntity{
     @Column(name="service_name", nullable = false)
