@@ -1,8 +1,6 @@
 package com.example.rentnest.model.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +9,8 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class InvoiceResponse {
     private Long id; //id hoa don
     private String hostelName; //ten co so
@@ -29,9 +29,13 @@ public class InvoiceResponse {
     @Getter
     @Setter
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ItemDto {
         private Long id; //id dong hoa don
         private Long serviceId; //dich vu
+        private Double oldIndex; // so moi
+        private Double newIndex;
         private String description; //mo ta
         private BigDecimal amount; //thanh tien cua dong
     }

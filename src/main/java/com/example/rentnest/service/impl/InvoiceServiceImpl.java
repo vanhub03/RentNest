@@ -116,6 +116,7 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
     @Override
     @Transactional
     public InvoiceResponse getCurrentUnpaidInvoiceForTenant(Long tenantId) {
+
         return invoiceRepository.findCurrentUnpaidTenantInvoices(tenantId, Pageable.ofSize(1))
                 .stream().findFirst().map(this::toResponse).orElse(null);
     }
@@ -236,6 +237,23 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
         //quy uoc item dau tien la tien phong, ne lay item[0]
         BigDecimal roomAmount = invoice.getItems() == null || invoice.getItems().isEmpty() ? BigDecimal.ZERO : invoice.getItems().get(0).getAmount();
         BigDecimal serviceAmount = invoice.getTotalAmount().subtract(roomAmount);
+
+//        InvoiceResponse invoiceResponse = new InvoiceResponse();
+//
+//        if(invoice.getItems() == null){
+//            invoiceResponse.setItems(List.of());
+//        }else{
+//            for(InvoiceItem item : invoice.getItems()){
+//                MeterReading reading = meterReadingRepository.findByRoom_IdAndService_IdAndReadingMonth(room.getId(),item.getService().getId(),(invoice.getInvoiceMonth())).orElse(null);
+//                InvoiceResponse.ItemDto itemDto = new InvoiceResponse.ItemDto();
+//                itemDto.setId(item.getId());
+//                itemDto.setServiceId(item.getService().getId());
+//                itemDto.setAmount(item.getAmount());
+//                itemDto.setDescription(item.getDescription());
+//                invoiceResponse.getItems().add(itemDto);
+//            }
+//        }
+
         return InvoiceResponse.builder()
                 .id(invoice.getId())
                 .hostelName(room.getHostel().getName())
@@ -250,12 +268,19 @@ public class InvoiceServiceImpl extends BaseServiceImpl<Invoice, Long, InvoiceRe
                 .status(invoice.getStatus().name())
                 .duwDate(invoice.getDueDate())
                 .items(invoice.getItems() == null ? List.of() : invoice.getItems().stream()
-                        .map(item -> InvoiceResponse.ItemDto.builder()
+                        .map(item ->{
+                            MeterReading reading = meterReadingRepository.findByRoom_IdAndService_IdAndReadingMonth(room.getId(), item.getService() == null ? null : item.getService().getId(), invoice.getInvoiceMonth()).orElse(null);
+                            System.out.println(reading == null ? "null" : reading.toString());
+                            return InvoiceResponse.ItemDto.builder()
                                 .id(item.getId())
                                 .serviceId(item.getService() != null ? item.getService().getId() : null)
                                 .amount(item.getAmount())
+                                    .oldIndex(reading == null ? null : reading.getOldIndex())
+                                    .newIndex(reading == null ? null : reading.getNewIndex())
                                 .description(item.getDescription())
-                                .build()).toList()
+                                .build();}
+                        ).toList()
                         ).build();
     }
+
 }
