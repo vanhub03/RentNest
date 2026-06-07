@@ -1,12 +1,13 @@
 package com.example.rentnest.controller;
 
+import com.example.rentnest.enums.ContractStatus;
 import com.example.rentnest.enums.RoomStatus;
-import com.example.rentnest.model.Hostel;
-import com.example.rentnest.model.Room;
-import com.example.rentnest.model.RoomImage;
+import com.example.rentnest.model.*;
 import com.example.rentnest.model.dto.request.RoomCreateRequestDTO;
 import com.example.rentnest.model.dto.response.MessageResponse;
 import com.example.rentnest.model.dto.response.RoomCardResponse;
+import com.example.rentnest.repository.ContractRepository;
+import com.example.rentnest.repository.OccupantRepository;
 import com.example.rentnest.repository.RoomRepository;
 import com.example.rentnest.security.UserDetailsImpl;
 import com.example.rentnest.service.HostelService;
@@ -41,6 +42,10 @@ public class RoomController {
     private RoomRepository roomRepository;
     @Autowired
     private RoomImageService roomImageService;
+    @Autowired
+    private ContractRepository contractRepository;
+    @Autowired
+    private OccupantRepository occupantRepository;
 
     @PostMapping
     public ResponseEntity<?> addRoom(@RequestParam("rooms") String Json,
@@ -77,7 +82,7 @@ public class RoomController {
     }
 
 
-    @PutMapping("/{id}") // PUT /api/cars/{id}
+    @PutMapping("/{id}") // PUT /api/rooms/{id}
     @Transactional
     public ResponseEntity<?> updateRoom(@PathVariable Long id,
                            @RequestParam("rooms") String roomJson,
@@ -97,7 +102,19 @@ public class RoomController {
         room.setBedType(roomCreateRequestDTO.getBedType());
         room.setBathCount(roomCreateRequestDTO.getBathCount());
         room.setBedType(roomCreateRequestDTO.getBedType());
+        if(room.getStatus() == RoomStatus.RENTED && RoomStatus.valueOf(roomCreateRequestDTO.getStatus()) == RoomStatus.AVAILABLE) {
+            Contract contract = contractRepository.findByRoom_IdAndRoom_Hostel_Owner_Id(id,userDetails.getId()).orElseThrow(() -> new RuntimeException("Contract not found"));
+            contract.setStatus(ContractStatus.TERMINATED);
+            contractRepository.save(contract);
+            List<Occupant> occupants = occupantRepository.findByRoom_IdAndIsActiveTrueOrderByIsRepresentativeDescIdAsc(id);
+            for(Occupant occupant : occupants) {
+                occupant.setActive(false);
+            }
+            occupantRepository.saveAll(occupants);
+
+        }
         room.setStatus(RoomStatus.valueOf(roomCreateRequestDTO.getStatus()));
+
         roomService.save(room);
         if(imagesInput != null) { // Nếu có ảnh mới
             List<RoomImage> images = roomImageService.findByRoomId(id); // Lấy danh sách ảnh cũ
@@ -116,6 +133,7 @@ public class RoomController {
                 roomImageService.save(roomImage);
             }
         }
+
         return ResponseEntity.ok(RoomCardResponse.builder()
                 .id(room.getId())
                 .title(room.getRoomName())

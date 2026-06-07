@@ -17,6 +17,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = 0")
 public class Occupant extends BaseEntity {
 
+
     @Nationalized
     @Column(name = "full_name", nullable = false)
     private String fullName;
