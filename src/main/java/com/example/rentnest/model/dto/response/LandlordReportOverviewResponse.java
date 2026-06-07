@@ -17,7 +17,7 @@ public class LandlordReportOverviewResponse {
     private BigDecimal totalRevenue; //tong doanh thu
     private BigDecimal paidAmount; //tong tien da thu
     private BigDecimal debtAmount; //tong tien no.
-    private List<RevenueSlice> revenueStracture; // du lieu bieu do tron
+    private List<RevenueSlice> revenueStructure; // du lieu bieu do tron
     @Getter
     @Setter
     @AllArgsConstructor
@@ -34,7 +34,7 @@ public class LandlordReportOverviewResponse {
     @NoArgsConstructor
     @Builder
     public static class CashFlowRow  { // bieu do cot
-        private Long hostelID;
+        private Long hostelId;
         private String hostelName;
         private BigDecimal roomRevenue; //tong tien phong
         private BigDecimal serviceRevenue; //tong tien dich vu

@@ -33,7 +33,7 @@ public class LandlordReportServiceImpl implements LandlordReportService {
                 .totalRevenue(totalRevenue)
                 .paidAmount(stats.getPaidAmount())
                 .debtAmount(stats.getDebtAmount())
-                .revenueStracture(revenueSlices)
+                .revenueStructure(revenueSlices)
                 .cashFlowByHostel(cashFlowRows)
                 .build();
 
@@ -59,7 +59,7 @@ public class LandlordReportServiceImpl implements LandlordReportService {
         List<LandlordReportOverviewResponse.CashFlowRow> cashFlowRowList = new ArrayList<>();
         for (Object[] row : cashFlowRows) {
             LandlordReportOverviewResponse.CashFlowRow cashFlowRow = new LandlordReportOverviewResponse.CashFlowRow();
-            cashFlowRow.setHostelID((Long) row[0]);
+            cashFlowRow.setHostelId((Long) row[0]);
             cashFlowRow.setHostelName((String) row[1]);
             cashFlowRow.setRoomRevenue(row[2] == null ? (BigDecimal.ZERO) : new BigDecimal(String.valueOf(row[2])));
             cashFlowRow.setServiceRevenue(row[3] == null ? (BigDecimal.ZERO) : new BigDecimal(String.valueOf(row[3])));
