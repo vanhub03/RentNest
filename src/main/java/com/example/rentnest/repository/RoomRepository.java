@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface RoomRepository extends BaseRepository<Room, Long>{
     Page<Room> findAll(Specification<Room> specification, Pageable pageable);
     boolean existsByHostelIdAndStatus(Long hostelId, RoomStatus status);
-    List<Room> findTop4ByOrderByCreatedAtDesc();
+    List<Room> findTop5ByOrderByCreatedAtDesc();
 
     @Query("SELECT DISTINCT CONCAT(h.ward, ', ', h.city) " +
             "FROM Room r JOIN r.hostel h " +

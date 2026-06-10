@@ -71,7 +71,7 @@ public class RoomServiceImpl extends BaseServiceImpl<Room, Long, RoomRepository>
 
     @Override
     public List<Room> findTop4ByOrderByCreatedAtDesc() {
-        return roomRepository.findTop4ByOrderByCreatedAtDesc();
+        return roomRepository.findTop5ByOrderByCreatedAtDesc();
     }
 
     @Override
