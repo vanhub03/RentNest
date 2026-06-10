@@ -9,13 +9,16 @@ import com.example.rentnest.repository.ContractRepository;
 import com.example.rentnest.repository.OccupantRepository;
 import com.example.rentnest.repository.specification.OccupantSpecification;
 import com.example.rentnest.service.OccupantService;
+import com.example.rentnest.service.cloudinary.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -25,6 +28,8 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
     private OccupantRepository occupantRepository;
     @Autowired
     private ContractRepository contractRepository;
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Override
     public Page<TenantResponse> getTenantsByLandlord(Long landlordId, String keyword, Pageable pageable) {
@@ -40,17 +45,20 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
     }
 
     @Override
-    public TenantRoomResponse addCoOccupant(Long tenantId, Long roomId, CoOccupantRequest request) {
+    public TenantRoomResponse addCoOccupant(Long tenantId, Long roomId, CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) throws IOException {
         Contract contract = contractRepository.findTenantActiveContractByRoom(tenantId, roomId, ContractStatus.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Khong thay hop dong cua phong dang chi dinh"));
-        validateRequest(request);
+        validateRequest(request, cccdFront, cccdBack);
+        String cccdFrontUrl = cloudinaryService.uploadImage(cccdFront);
+        String cccdBackUrl = cloudinaryService.uploadImage(cccdBack);
+
         Occupant occupant = Occupant.builder()
                 .room(contract.getRoom())
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
                 .identityCard(request.getIdentityCard())
-                .identityCardFrontUrl(request.getIdentityCardFrontUrl())
-                .identityCardBackUrl(request.getIdentityCardBackUrl())
+                .identityCardFrontUrl(cccdFrontUrl)
+                .identityCardBackUrl(cccdBackUrl)
                 .isRepresentative(false)
                 .isActive(true)
                 .build();
@@ -58,15 +66,29 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
         return toRoomResponse(contract);
     }
 
-    private void validateRequest(CoOccupantRequest request) {
+    private void validateRequest(CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) {
         if(!StringUtils.hasText(request.getFullName())){
             throw new RuntimeException("Vui long nhap ho ten nguoi o cung");
+        }
+        if(!StringUtils.hasText(request.getIdentityCard()) || request.getIdentityCard().length() != 12){
+            throw new RuntimeException("Cccd phai co 12 so");
         }
         if(!StringUtils.hasText(request.getPhoneNumber())){
             throw new RuntimeException("Vui long nhap so dien thoai nguoi o cung");
         }
+        validateImageFile(cccdFront, "Vui long upload anh cccd mat truoc");
+        validateImageFile(cccdBack, "Vui long upload anh cccd mat sau");
     }
+        private void validateImageFile(MultipartFile file, String missingMessage) {
+        if(file == null || file.isEmpty()){
+            throw new RuntimeException(missingMessage);
+        }
+        String contentType = file.getContentType();
+        if(contentType == null || !contentType.startsWith("image/")){
+            throw new RuntimeException("Vui long nhap hinh anh vao");
+        }
 
+        }
     private TenantRoomResponse toRoomResponse(Contract contract){
         Room room = contract.getRoom();
         Hostel hostel = room.getHostel();
@@ -96,6 +118,8 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
                         .fullName(occupant.getFullName())
                         .phoneNumber(occupant.getPhoneNumber())
                         .identityCard(occupant.getIdentityCard())
+                        .identityCardFrontUrl(occupant.getIdentityCardFrontUrl())
+                        .identityCardBackUrl(occupant.getIdentityCardBackUrl())
                         .representative(occupant.isRepresentative())
                         .active(occupant.isActive())
                         .build())
