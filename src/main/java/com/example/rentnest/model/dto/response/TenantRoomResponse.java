@@ -30,7 +30,9 @@ public class TenantRoomResponse {
         private Long id;
         private String fullName;
         private String phoneNumber;
-        private String identityCard; //cccd
+        private String identityCard;
+        private String identityCardFrontUrl; //cccd
+        private String identityCardBackUrl;
         private boolean representative; //se la true neu la nguoi dai dien hop dong
         private boolean active;
     }
