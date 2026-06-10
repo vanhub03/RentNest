@@ -18,6 +18,7 @@ public interface ContractRepository extends BaseRepository<Contract, Long>{
     Page<Contract> findByRoom_Hostel_Owner_IdAndStatus(Long landlordId, ContractStatus status, Pageable pageable);
     Page<Contract> findByRoom_Hostel_Owner_Id(Long landlordId, Pageable pageable);
     Optional<Contract> findByIdAndRoom_Hostel_Owner_Id(Long id, Long landlordId);
+    Optional<Contract> findByRoom_IdAndRoom_Hostel_Owner_Id(Long id, Long landlordId);
     @Query("select c from Contract c " +
             "where c.room.hostel.owner.id = :landlordId " +
             "and c.status = :status " +

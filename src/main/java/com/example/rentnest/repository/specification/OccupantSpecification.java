@@ -18,6 +18,8 @@ public class OccupantSpecification {
             Join<Room, Hostel> hostelJoin = roomJoin.join("hostel");
 
             predicates.add(cb.equal(hostelJoin.get("owner").get("id"), landlordId));
+            predicates.add(cb.equal(root.get("isActive"), true));
+
 
             if(keyword != null && !keyword.trim().isEmpty()) {
                 String likeKeyword = "%" + keyword.trim().toLowerCase() + "%";
