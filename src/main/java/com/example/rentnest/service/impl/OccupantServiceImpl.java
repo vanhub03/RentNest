@@ -66,7 +66,13 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
         return toRoomResponse(contract);
     }
 
-    private void validateRequest(CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) {
+    @Override
+    public TenantResponse getTenantDetailForLandlord(Long landlordId, Long tenantId) {
+        Occupant occupant = occupantRepository.findByIdAndRoom_Hostel_Owner_Id(tenantId, landlordId).orElseThrow(() -> new RuntimeException("Khong tim thay khach thue"));
+        return mapToResponse(occupant);
+    }
+
+    private void validateRequest(CoOccupantRequest request) {
         if(!StringUtils.hasText(request.getFullName())){
             throw new RuntimeException("Vui long nhap ho ten nguoi o cung");
         }
@@ -141,6 +147,8 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
                 .phoneNumber(occupant.getPhoneNumber())
                 .email(occupant.getUserAccount() != null ? occupant.getUserAccount().getEmail() : "Chưa có tài khoản")
                 .identityCard(occupant.getIdentityCard() != null ? occupant.getIdentityCard() : "Chưa cập nhật")
+                .identityCardFrontUrl(occupant.getIdentityCardFrontUrl())
+                .identityCardBackUrl(occupant.getIdentityCardBackUrl())
                 .roomName(occupant.getRoom() != null ? occupant.getRoom().getRoomName() : "Chưa cập nhật")
                 .hostelName(occupant.getRoom() != null ? occupant.getRoom().getHostel().getName() : "Chưa cập nhật")
                 .isRepresentative(occupant.isRepresentative())

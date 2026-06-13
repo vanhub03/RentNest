@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface OccupantRepository extends BaseRepository<Occupant, Long>{
     Page<Occupant> findAll(Specification<Occupant> spec, Pageable pageable);
     List<Occupant> findByRoom_IdAndIsActiveTrueOrderByIsRepresentativeDescIdAsc(Long roomId);
+    Optional<Occupant> findByIdAndRoom_Hostel_Owner_Id(Long id, Long landlordId);
 
 }

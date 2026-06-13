@@ -15,6 +15,8 @@ public class TenantResponse {
     private String phoneNumber;
     private String email;
     private String identityCard;
+    private String identityCardFrontUrl;
+    private String identityCardBackUrl;
     private String roomName;
     private String hostelName;
     private boolean isRepresentative;

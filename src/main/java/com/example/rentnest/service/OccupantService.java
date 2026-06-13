@@ -16,4 +16,5 @@ public interface OccupantService extends BaseService<Occupant, Long>{
     Page<TenantResponse> getTenantsByLandlord(Long landlordId, String keyword, Pageable pageable);
     List<TenantRoomResponse> getMyRooms(Long tenantId);
     TenantRoomResponse addCoOccupant(Long tenantId, Long roomId, CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) throws IOException;
+    TenantResponse getTenantDetailForLandlord(Long landlordId, Long tenantId);
 }

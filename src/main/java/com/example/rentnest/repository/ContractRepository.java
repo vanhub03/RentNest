@@ -54,7 +54,7 @@ public interface ContractRepository extends BaseRepository<Contract, Long>{
             "left join rr.tenant requestTenant " +
             "where c.status = :status " +
             "and c.room.id = :roomId " +
-            "and (u.id = :tenantId) or requestTenant.id = :tenantId " +
+            "and (u.id = :tenantId or requestTenant.id = :tenantId) " +
             "order by c.startDate desc, c.id desc")
     Optional<Contract> findTenantActiveContractByRoom(@Param("tenantId") Long tenantId, @Param("roomId") Long roomId, @Param("status") ContractStatus status);
 }

@@ -140,4 +140,9 @@ public class LandlordControllder {
         rentalRequestService.updateStatus(userDetails.getId(), id, status, request.getRejectReason());
         return ResponseEntity.ok(new MessageResponse("Cập nhật trạng thái thành công"));
     }
+
+    @GetMapping("/tenants/{id}")
+    public ResponseEntity<TenantResponse> getTenantDetail(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails){
+        return ResponseEntity.ok(occupantService.getTenantDetailForLandlord(userDetails.getId(), id));
+    }
 }
