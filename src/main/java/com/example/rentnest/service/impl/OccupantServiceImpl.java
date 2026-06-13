@@ -72,7 +72,7 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
         return mapToResponse(occupant);
     }
 
-    private void validateRequest(CoOccupantRequest request) {
+    private void validateRequest(CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) throws IOException {
         if(!StringUtils.hasText(request.getFullName())){
             throw new RuntimeException("Vui long nhap ho ten nguoi o cung");
         }
