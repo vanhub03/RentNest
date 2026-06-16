@@ -1,7 +1,9 @@
 package com.example.rentnest.controller;
 
 import com.example.rentnest.enums.RequestStatus;
+import com.example.rentnest.model.Occupant;
 import com.example.rentnest.model.RentalRequest;
+import com.example.rentnest.model.dto.request.AddRoomOccupantsRequest;
 import com.example.rentnest.model.dto.request.RentalRequestStatusUpdateRequest;
 import com.example.rentnest.model.dto.response.*;
 import com.example.rentnest.repository.RentalRequestRepository;
@@ -11,6 +13,7 @@ import com.example.rentnest.service.HostelService;
 import com.example.rentnest.service.OccupantService;
 import com.example.rentnest.service.RentalRequestService;
 import com.example.rentnest.service.RoomService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import freemarker.template.TemplateException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -50,7 +54,7 @@ public class LandlordControllder {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String keyword,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-            ){
+    ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<HostelCardResponse> response = hostelService.getHostelsByLandlord(userDetails.getId(), keyword, pageable);
         return ResponseEntity.ok(response);
@@ -63,13 +67,13 @@ public class LandlordControllder {
             @RequestParam(required = false) Long hostelId,
             @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
+    ) {
         Page<RoomCardResponse> response = roomService.getRoomByLandlord(userDetails.getId(), keyword, status, hostelId, pageable);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<RoomCardResponse>> getAvailableRooms(@AuthenticationPrincipal UserDetailsImpl userDetails){
+    public ResponseEntity<List<RoomCardResponse>> getAvailableRooms(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<RoomCardResponse> rooms = roomService.getAvailableRooms(userDetails.getId());
         return ResponseEntity.ok(rooms);
     }
@@ -80,14 +84,14 @@ public class LandlordControllder {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String keyword,
-            @AuthenticationPrincipal UserDetailsImpl userDetails){
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         Page<TenantResponse> responses = occupantService.getTenantsByLandlord(userDetails.getId(), keyword, pageable);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/rental-requests/stats")
-    public ResponseEntity<?> getRentalRequests(@AuthenticationPrincipal UserDetailsImpl userDetails){
+    public ResponseEntity<?> getRentalRequests(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         StatsResponse statsResponse = StatsResponse.builder()
                 .total(rentalRequestRepository.countByRoomHostelOwnerId(userDetails.getId()))
                 .pending(rentalRequestRepository.countByRoomHostelOwnerIdAndStatus(userDetails.getId(), RequestStatus.PENDING))
@@ -105,28 +109,28 @@ public class LandlordControllder {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
+    ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Specification<RentalRequest> spec = RentalRequestSpecification.rentalRequestSpecification(userDetails.getId(), status, roomId, tenantName);
         Page<RentalRequest> requests = rentalRequestRepository.findAll(spec, pageable);
         return ResponseEntity.ok(requests.map(req -> RentalRequestResponse.builder()
-                        .id(req.getId())
-                        .tenantName(req.getTenant().getFullname())
-                        .tenantPhone(req.getTenant().getPhoneNumber())
-                        .roomId(req.getRoom().getId())
-                        .roomName(req.getRoom().getRoomName())
-                        .hostelAddress(req.getRoom().getHostel().getAddressDetail())
-                        .expectedMoveInDate(req.getExpectedMoveInDate())
-                        .createdAt(req.getCreatedAt())
-                        .status(req.getStatus().name())
-                        .build()));
+                .id(req.getId())
+                .tenantName(req.getTenant().getFullname())
+                .tenantPhone(req.getTenant().getPhoneNumber())
+                .roomId(req.getRoom().getId())
+                .roomName(req.getRoom().getRoomName())
+                .hostelAddress(req.getRoom().getHostel().getAddressDetail())
+                .expectedMoveInDate(req.getExpectedMoveInDate())
+                .createdAt(req.getCreatedAt())
+                .status(req.getStatus().name())
+                .build()));
     }
 
     @GetMapping("/rental-requests/{id}")
     public ResponseEntity<RentalRequestResponse> getRentalRequestDetail(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
+    ) {
         return ResponseEntity.ok(rentalRequestService.getRequestDetailForLandlord(userDetails.getId(), id));
     }
 
@@ -135,14 +139,29 @@ public class LandlordControllder {
             @PathVariable Long id,
             @RequestBody RentalRequestStatusUpdateRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-            ) throws TemplateException, IOException {
+    ) throws TemplateException, IOException {
         RequestStatus status = RequestStatus.valueOf(request.getStatus());
         rentalRequestService.updateStatus(userDetails.getId(), id, status, request.getRejectReason());
         return ResponseEntity.ok(new MessageResponse("Cập nhật trạng thái thành công"));
     }
 
     @GetMapping("/tenants/{id}")
-    public ResponseEntity<TenantResponse> getTenantDetail(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails){
+    public ResponseEntity<TenantResponse> getTenantDetail(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(occupantService.getTenantDetailForLandlord(userDetails.getId(), id));
     }
+
+    @PostMapping("/rooms/{roomId}/occupants")
+    public ResponseEntity<?> addOccupantToRentedRoom(@PathVariable Long roomId, @RequestPart("data") String jsonData, @RequestPart("cccdFronts") List<MultipartFile> cccdFronts, @RequestPart("cccdBacks") List<MultipartFile> cccdBacks, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    try{
+        ObjectMapper objectMapper = new ObjectMapper();
+        AddRoomOccupantsRequest addRoomOccupantsRequest = objectMapper.readValue(jsonData, AddRoomOccupantsRequest.class);
+        return ResponseEntity.ok(occupantService.addOccupantsToRentedRooms(userDetails.getId(), roomId, addRoomOccupantsRequest, cccdFronts, cccdBacks));
+
+    }
+    catch(Exception e){
+        return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+
+    }
+    }
+
 }

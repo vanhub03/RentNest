@@ -1,6 +1,7 @@
 package com.example.rentnest.service;
 
 import com.example.rentnest.model.Occupant;
+import com.example.rentnest.model.dto.request.AddRoomOccupantsRequest;
 import com.example.rentnest.model.dto.request.CoOccupantRequest;
 import com.example.rentnest.model.dto.response.TenantResponse;
 import com.example.rentnest.model.dto.response.TenantRoomResponse;
@@ -17,4 +18,6 @@ public interface OccupantService extends BaseService<Occupant, Long>{
     List<TenantRoomResponse> getMyRooms(Long tenantId);
     TenantRoomResponse addCoOccupant(Long tenantId, Long roomId, CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) throws IOException;
     TenantResponse getTenantDetailForLandlord(Long landlordId, Long tenantId);
+    List<TenantResponse> addOccupantsToRentedRooms(Long landlordId, Long roomId, AddRoomOccupantsRequest request, List<MultipartFile> cccdFronts, List<MultipartFile> cccdBacks) throws IOException;
+
 }

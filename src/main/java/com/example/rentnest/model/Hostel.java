@@ -48,6 +48,7 @@ public class Hostel extends BaseEntity{
     private String city;
 
     @Nationalized
+    @Column(columnDefinition = "nvarchar(MAX)")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

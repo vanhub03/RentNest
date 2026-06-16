@@ -1,7 +1,9 @@
 package com.example.rentnest.service.impl;
 
 import com.example.rentnest.enums.ContractStatus;
+import com.example.rentnest.enums.RoomStatus;
 import com.example.rentnest.model.*;
+import com.example.rentnest.model.dto.request.AddRoomOccupantsRequest;
 import com.example.rentnest.model.dto.request.CoOccupantRequest;
 import com.example.rentnest.model.dto.response.TenantResponse;
 import com.example.rentnest.model.dto.response.TenantRoomResponse;
@@ -19,7 +21,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, OccupantRepository> implements OccupantService {
@@ -70,6 +74,56 @@ public class OccupantServiceImpl extends BaseServiceImpl<Occupant, Long, Occupan
     public TenantResponse getTenantDetailForLandlord(Long landlordId, Long tenantId) {
         Occupant occupant = occupantRepository.findByIdAndRoom_Hostel_Owner_Id(tenantId, landlordId).orElseThrow(() -> new RuntimeException("Khong tim thay khach thue"));
         return mapToResponse(occupant);
+    }
+
+    @Override
+    public List<TenantResponse> addOccupantsToRentedRooms(Long landlordId, Long roomId, AddRoomOccupantsRequest request, List<MultipartFile> cccdFronts, List<MultipartFile> cccdBacks) throws IOException {
+        Contract contract = contractRepository.findByRoom_IdAndRoom_Hostel_Owner_IdAndStatus(roomId, landlordId, ContractStatus.ACTIVE).orElseThrow(() -> new RuntimeException("Khong tim thay hop dong"));
+        if(contract.getRoom().getStatus() != (RoomStatus.RENTED)){
+            throw new RuntimeException("Chi co the them nguoi vao phong dang thue");
+        }
+        validateNewOccupant(request, cccdFronts, cccdBacks);
+        List<Occupant> occupants = new ArrayList<>();
+        for (int i = 0; i < request.getOccupants().size(); i++) {
+            AddRoomOccupantsRequest.OccupantDto occupantDto = request.getOccupants().get(i);
+            occupants.add(Occupant.builder()
+                            .room(contract.getRoom())
+                            .fullName(occupantDto.getFullName())
+                            .phoneNumber(occupantDto.getPhoneNumber())
+                            .identityCard(occupantDto.getIdentityCard())
+                            .identityCardFrontUrl(cloudinaryService.uploadImage(cccdFronts.get(i)))
+                            .identityCardBackUrl(cloudinaryService.uploadImage(cccdBacks.get(i)))
+                            .isRepresentative(false)
+                            .isActive(true)
+
+                    .build());
+
+        }
+        return occupantRepository.saveAll(occupants).stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+    private void validateNewOccupant(AddRoomOccupantsRequest request, List<MultipartFile> cccdFronts, List<MultipartFile> cccdBacks) {
+        if (request.getOccupants() == null || request.getOccupants().isEmpty()) {
+            throw new RuntimeException("them it nhat 1 nguoi");
+
+        }
+        int occupantCount = request.getOccupants().size();
+        if (cccdFronts.size() != occupantCount || cccdBacks.size() != occupantCount || cccdFronts == null || cccdBacks == null) {
+            throw new RuntimeException("Hay chup cccd mat truoc va sau");
+        }
+        for (int i = 0; i < occupantCount; i++) {
+            AddRoomOccupantsRequest.OccupantDto occupantDto = request.getOccupants().get(i);
+            if (StringUtils.isEmpty(occupantDto.getPhoneNumber()) || StringUtils.isEmpty(occupantDto.getFullName())) {
+                throw new RuntimeException("Vui long nhap du ten va so dien thoai");
+            }
+            if (StringUtils.isEmpty(occupantDto.getIdentityCard())) {
+                throw new RuntimeException("Vui long dien so cccd");
+            }
+            validateImageFile(cccdFronts.get(i), "Vui long upload anh cccd mat truoc");
+            validateImageFile(cccdBacks.get(i), "Vui long upload anh cccd mat sau");
+
+        }
+
+
     }
 
     private void validateRequest(CoOccupantRequest request, MultipartFile cccdFront, MultipartFile cccdBack) throws IOException {

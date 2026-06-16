@@ -10,9 +10,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface ContractService extends BaseService<Contract, Long>{
-//    void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, MultipartFile cccdFront, MultipartFile cccdBack, Long landlordId) throws IOException;
+    void onboardNewTenant(TenantOnboardRequest request, MultipartFile contractFile, List<MultipartFile> cccdFronts, List<MultipartFile> cccdBacks, Long landlordId) throws IOException;
     Contract createDraftFromRentalRequest(RentalRequest rentalRequest);
     ContractPreviewResponse getPreviewForLandlord(Long landlordId, Long rentalRequestId);
     ContractPreviewResponse getPreviewForTenant(Long tenantId, Long rentalRequestId);
