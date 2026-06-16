@@ -31,8 +31,8 @@ public class LandlordContractController {
     public ResponseEntity<?> onboardTenant(
             @RequestPart("data") String jsonData,
             @RequestPart(value = "contractFile", required = false) MultipartFile contractFile,
-            @RequestPart(value = "cccdFront", required = false) List<MultipartFile> cccdFronts,
-            @RequestPart(value = "cccdBack", required = false) List<MultipartFile> cccdBacks,
+            @RequestPart(value = "cccdFronts", required = false) List<MultipartFile> cccdFronts,
+            @RequestPart(value = "cccdBacks", required = false) List<MultipartFile> cccdBacks,
             @AuthenticationPrincipal UserDetailsImpl userDetails
             ){
         try {
