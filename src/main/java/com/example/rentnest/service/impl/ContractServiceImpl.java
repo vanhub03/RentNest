@@ -85,7 +85,7 @@ public class ContractServiceImpl extends BaseServiceImpl<Contract, Long, Contrac
         //xu ly file hop dong
         String contractUrl = null;
         if(contractFile != null && !contractFile.isEmpty()){
-            contractUrl = cloudinaryService.uploadImage(contractFile);
+            contractUrl = cloudinaryService.uploadContractFile(contractFile);
         }
 
         Contract contract = Contract.builder()

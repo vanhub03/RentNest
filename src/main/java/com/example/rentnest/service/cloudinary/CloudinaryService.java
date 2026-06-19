@@ -8,6 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
+
 @Service
 public class CloudinaryService {
     @Autowired
@@ -16,6 +18,28 @@ public class CloudinaryService {
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
         return (String) uploadResult.get("secure_url");
     }
+
+    public String uploadContractFile(MultipartFile file) throws IOException {
+        String contentType = file.getContentType();
+        if(contentType != null && contentType.startsWith("image/")) {
+            return uploadImage(file);
+        }
+        String publicId = "contracts/" + UUID.randomUUID() + resolveExtension((file.getOriginalFilename()));
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "raw", "public_id", publicId, "access_mode", "public"));
+        return (String) uploadResult.get("secure_url");
+    }
+
+    private String resolveExtension(String originalFileName){
+        if(originalFileName == null){
+            return "";
+        }
+        int dotIndex = originalFileName.lastIndexOf(".");
+        if(dotIndex < 0 || dotIndex == originalFileName.length() - 1){
+            return "";
+        }
+        return originalFileName.substring(dotIndex).toLowerCase();
+    }
+
     public String extractPublicId(String imageUrl) {
         String[] parts = imageUrl.split("/");
         String filename = parts[parts.length - 1];

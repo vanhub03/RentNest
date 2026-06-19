@@ -24,6 +24,4 @@ public class AddRoomOccupantsRequest {
         private String identityCard;
     }
     List<OccupantDto> occupants;
-
-
 }
